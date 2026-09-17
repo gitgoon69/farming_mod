@@ -165,7 +165,7 @@ public class FarmingProfitClient implements ClientModInitializer {
 								pestLoadout.cancelPendingAuto();
 							}
 							feedback(ctx, config.autoPestLoadout
-									? "Auto loadout : ON (Pest à 2m50, Farm 2s après le spawn)."
+									? "Auto loadout : ON (Pest à 2m50, /setspawn au spawn, Farm 0.5–1s après)."
 									: "Auto loadout : OFF.");
 							return 1;
 						}))

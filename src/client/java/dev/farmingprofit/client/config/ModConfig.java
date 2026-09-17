@@ -37,7 +37,7 @@ public final class ModConfig {
 	public int pestCooldownAlertAtSeconds = 170;
 	/** Durée du compte à rebours affiché (secondes). */
 	public int pestCooldownAlertCountdown = 5;
-	/** À 2m50 → loadout Pest, 2s après le spawn → loadout Farm. */
+	/** À 2m50 → loadout Pest, 0.5–1s après le spawn → /setspawn + loadout Farm. */
 	public boolean autoPestLoadout = true;
 	/** Pack serveur Hypixel en tout dernier (vanilla + tes packs passent devant). */
 	public boolean hideServerResourcePack = true;

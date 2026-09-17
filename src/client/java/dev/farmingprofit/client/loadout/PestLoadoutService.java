@@ -1,6 +1,7 @@
 package dev.farmingprofit.client.loadout;
 
 import java.util.Locale;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.regex.Pattern;
 
 import dev.farmingprofit.FarmingProfitMod;
@@ -30,7 +31,8 @@ public final class PestLoadoutService {
 	private static final int CLICK_DELAY_TICKS = 4;
 	private static final int CLOSE_DELAY_TICKS = 6;
 	private static final long RETRIGGER_COOLDOWN_MS = 2500L;
-	private static final long FARM_AFTER_SPAWN_MS = 2000L;
+	private static final long FARM_AFTER_SPAWN_MIN_MS = 500L;
+	private static final long FARM_AFTER_SPAWN_MAX_MS = 1000L;
 	private static final Pattern PEST_SPAWN = Pattern.compile(
 			"(?i)(?:eww|yuck|gross|ew).{0,32}pest|(?i)pests? (?:have )?spawned"
 	);
@@ -98,7 +100,7 @@ public final class PestLoadoutService {
 	}
 
 	public void onChat(String raw) {
-		if (!config.autoPestLoadout || raw == null || raw.isBlank()) {
+		if (raw == null || raw.isBlank()) {
 			return;
 		}
 		String text = strip(raw);
@@ -108,14 +110,22 @@ public final class PestLoadoutService {
 		if (!PEST_SPAWN.matcher(text).find()) {
 			return;
 		}
-		if (!GardenDetector.inGarden() && !expectFarmAfterSpawn && !pestMode) {
+		boolean inGarden = GardenDetector.inGarden();
+		if (!inGarden && !expectFarmAfterSpawn && !pestMode) {
+			return;
+		}
+		if (inGarden) {
+			sendSetSpawn();
+		}
+		if (!config.autoPestLoadout) {
 			return;
 		}
 		if (!expectFarmAfterSpawn && !pestMode) {
 			return;
 		}
-		farmSwitchAtMs = System.currentTimeMillis() + FARM_AFTER_SPAWN_MS;
-		FarmingProfitMod.LOGGER.info("Pest spawn detected, Farm loadout in {}ms", FARM_AFTER_SPAWN_MS);
+		long delayMs = farmAfterSpawnDelayMs();
+		farmSwitchAtMs = System.currentTimeMillis() + delayMs;
+		FarmingProfitMod.LOGGER.info("Pest spawn detected, Farm loadout in {}ms", delayMs);
 	}
 
 	public void requestSwitch(boolean toPest) {
@@ -280,6 +290,19 @@ public final class PestLoadoutService {
 			client.setScreen(null);
 		}
 		player.connection.sendCommand("loadout");
+	}
+
+	private static void sendSetSpawn() {
+		Minecraft client = Minecraft.getInstance();
+		if (client.player == null || client.player.connection == null) {
+			return;
+		}
+		client.player.connection.sendCommand("setspawn");
+		FarmingProfitMod.LOGGER.info("Pest spawn detected, /setspawn");
+	}
+
+	private static long farmAfterSpawnDelayMs() {
+		return ThreadLocalRandom.current().nextLong(FARM_AFTER_SPAWN_MIN_MS, FARM_AFTER_SPAWN_MAX_MS + 1);
 	}
 
 	private void scanOpenLoadout(Minecraft client) {
