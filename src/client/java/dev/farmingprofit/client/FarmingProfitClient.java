@@ -19,6 +19,7 @@ import dev.farmingprofit.client.hud.PestCooldownAlertHud;
 import dev.farmingprofit.client.hud.PestModeHud;
 import dev.farmingprofit.client.hud.ProfitHud;
 import dev.farmingprofit.client.loadout.PestLoadoutService;
+import dev.farmingprofit.client.mining.PickaxeAbilityService;
 import dev.farmingprofit.client.prices.CoflBazaarService;
 import dev.farmingprofit.client.sell.NpcSellService;
 import dev.farmingprofit.client.update.UpdateChecker;
@@ -41,6 +42,7 @@ public class FarmingProfitClient implements ClientModInitializer {
 	private static CoflBazaarService prices;
 	private static NpcSellService npcSell;
 	private static PestLoadoutService pestLoadout;
+	private static PickaxeAbilityService pickaxeAbility;
 	private static PestCooldownTracker pestCooldown;
 	private static UpdateChecker updates;
 
@@ -52,6 +54,7 @@ public class FarmingProfitClient implements ClientModInitializer {
 		prices.start();
 		npcSell = new NpcSellService();
 		pestLoadout = new PestLoadoutService(config);
+		pickaxeAbility = new PickaxeAbilityService(config);
 		pestCooldown = new PestCooldownTracker();
 		updates = new UpdateChecker();
 
@@ -81,6 +84,9 @@ public class FarmingProfitClient implements ClientModInitializer {
 				pestLoadout.onPestAlert();
 			}
 			pestLoadout.tick(client);
+			if (!pestLoadout.running() && !npcSell.running()) {
+				pickaxeAbility.tick(client);
+			}
 			updates.tick(client);
 		});
 
@@ -92,9 +98,11 @@ public class FarmingProfitClient implements ClientModInitializer {
 		});
 
 		ClientReceiveMessageEvents.GAME.register((message, overlay) -> {
+			String text = message.getString();
 			if (!overlay) {
-				pestLoadout.onChat(message.getString());
+				pestLoadout.onChat(text);
 			}
+			pickaxeAbility.onChat(text);
 		});
 
 		ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
@@ -108,6 +116,7 @@ public class FarmingProfitClient implements ClientModInitializer {
 			tracker.resetSession();
 			VisitorLogbookStats.reset();
 			pestLoadout.resetSession();
+			pickaxeAbility.reset();
 			pestCooldown.reset();
 			if (npcSell.running()) {
 				npcSell.cancel();
@@ -179,6 +188,17 @@ public class FarmingProfitClient implements ClientModInitializer {
 							} else {
 								feedback(ctx, "Pack serveur Hypixel : priorité normale. Reconnecte pour le remettre en haut.");
 							}
+							return 1;
+						}))
+						.then(literal("pickaxe").executes(ctx -> {
+							config.autoPickaxeAbility = !config.autoPickaxeAbility;
+							config.save();
+							if (!config.autoPickaxeAbility) {
+								pickaxeAbility.reset();
+							}
+							feedback(ctx, config.autoPickaxeAbility
+									? "Auto ability pioche : ON (clic droit quand le cooldown arrive à 0)."
+									: "Auto ability pioche : OFF.");
 							return 1;
 						}))
 						.then(literal("update")
@@ -256,7 +276,7 @@ public class FarmingProfitClient implements ClientModInitializer {
 	}
 
 	private static int help(CommandContext<FabricClientCommandSource> ctx) {
-		ctx.getSource().sendFeedback(Component.literal("Farming Profit — /fprofit sell <item> [fois] | pest | pestauto | pestalert | serverpack | update [install] | sell cancel | move [x y|reset] | reset | toggle | hitbox | prices | mode <OFFER|INSTANT>").withStyle(ChatFormatting.GOLD));
+		ctx.getSource().sendFeedback(Component.literal("Farming Profit — /fprofit sell <item> [fois] | pest | pestauto | pestalert | pickaxe | serverpack | update [install] | sell cancel | move [x y|reset] | reset | toggle | hitbox | prices | mode <OFFER|INSTANT>").withStyle(ChatFormatting.GOLD));
 		return 1;
 	}
 

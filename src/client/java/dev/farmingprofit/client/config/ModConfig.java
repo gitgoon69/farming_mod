@@ -41,6 +41,8 @@ public final class ModConfig {
 	public boolean autoPestLoadout = true;
 	/** Pack serveur Hypixel en tout dernier (vanilla + tes packs passent devant). */
 	public boolean hideServerResourcePack = true;
+	/** Mining : clic droit auto quand l’ability pioche est prête (cooldown à 0). */
+	public boolean autoPickaxeAbility = true;
 
 	public static ModConfig load() {
 		if (!Files.exists(PATH)) {

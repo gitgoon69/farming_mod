@@ -67,6 +67,7 @@ Clic droit avec une **canne à pêche** :
 | `/fprofit pest` | Toggle Pest / Farm (comme la canne) |
 | `/fprofit pestalert` | Active ou désactive l’alerte cooldown pest (tab) |
 | `/fprofit pestauto` | Auto loadout Pest à 2m50, /setspawn au spawn, Farm 0.5–1s après |
+| `/fprofit pickaxe` | Auto ability pioche (clic droit quand le cooldown est à 0) |
 | `/fprofit serverpack` | Pack serveur Hypixel en priorité basse (défaut : ON) |
 
 Noms dans `farmingprofit.json` : `pestLoadoutName` (défaut `Pest`), `farmLoadoutName` (défaut `Farm`).
@@ -88,6 +89,14 @@ Réglages dans `farmingprofit.json` : `pestCooldownAlertAtSeconds` (défaut `170
 | Commande | Description |
 | --- | --- |
 | `/fprofit pestauto` | Active ou désactive le switch auto (défaut : ON) |
+
+## Auto ability pioche (mining)
+
+Quand le cooldown de l’ability pioche arrive à **0** (overlay item / chat *You used your … Pickaxe Ability!*), le mod fait **un clic droit** si une **pioche / drill** SkyBlock est en main. Pas de clic au Garden, ni dans un menu.
+
+| Commande | Description |
+| --- | --- |
+| `/fprofit pickaxe` | Active ou désactive (défaut : ON) |
 
 ## Pack serveur Hypixel
 
