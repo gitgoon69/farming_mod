@@ -133,14 +133,16 @@ Seul l’item nommé est vendu. Les autres slots de l’inventaire ne sont pas c
 
 ## Mises à jour
 
-Au login (si internet), le mod compare sa version à https://github.com/matteorlt/farming_mod/releases. S’il y a une update, un bouton **[Installer]** apparaît dans le chat : ça télécharge le JAR dans `mods/`, ferme Minecraft, puis un script remplace l’ancien fichier. Il suffit de **relancer le jeu**.
+Au login (si internet), le mod compare sa version à la release GitHub **Latest** (Minecraft **26.1.2** uniquement). S’il y a une update, un bouton **[Installer]** apparaît dans le chat : ça télécharge le JAR **26.1.2** dans `mods/`, ferme Minecraft, puis un script remplace l’ancien fichier. Il suffit de **relancer le jeu**.
+
+Le JAR **Minecraft 26.2** n’est **jamais** téléchargé automatiquement : il faut le prendre sur GitHub, release « Minecraft 26.2 ».
 
 Windows verrouille le JAR tant que Minecraft tourne : d’où la fermeture automatique (comme libautoupdate / ModUpdater).
 
 | Commande | Description |
 | --- | --- |
 | `/fprofit update` | Relance la vérif GitHub |
-| `/fprofit update install` | Installe la dernière release et ferme le jeu |
+| `/fprofit update install` | Installe la Latest **26.1.2** et ferme le jeu (jamais le JAR 26.2) |
 
 Désactiver : `"checkUpdates": false` dans `farmingprofit.json`.
 

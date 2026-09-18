@@ -94,8 +94,28 @@ public final class UpdateInstaller {
 		return modsDir().resolve(PENDING_NAME);
 	}
 
-	public static Path destinationJar(String version) {
+	public static Path destinationJar(String jarUrl, String version) {
+		String fileName = fileNameFromUrl(jarUrl);
+		if (fileName != null) {
+			return modsDir().resolve(fileName);
+		}
 		return modsDir().resolve("farmingprofit-" + version + ".jar");
+	}
+
+	private static String fileNameFromUrl(String jarUrl) {
+		if (jarUrl == null || jarUrl.isBlank()) {
+			return null;
+		}
+		try {
+			String path = URI.create(jarUrl).getPath();
+			int slash = path.lastIndexOf('/');
+			String name = slash >= 0 ? path.substring(slash + 1) : path;
+			if (name.toLowerCase(Locale.ROOT).endsWith(".jar") && !name.isBlank()) {
+				return name;
+			}
+		} catch (Exception ignored) {
+		}
+		return null;
 	}
 
 	public static void launchSwapAndExit(Path pending, Path destination, List<Path> oldJars) throws IOException {

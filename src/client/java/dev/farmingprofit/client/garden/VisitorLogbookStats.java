@@ -8,6 +8,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import dev.farmingprofit.client.compat.ClientScreens;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -43,7 +44,7 @@ public final class VisitorLogbookStats {
 	}
 
 	public static void tick(Minecraft client) {
-		if (!(client.screen instanceof AbstractContainerScreen<?> screen)) {
+		if (!(ClientScreens.current(client) instanceof AbstractContainerScreen<?> screen)) {
 			open = false;
 			return;
 		}

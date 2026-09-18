@@ -22,24 +22,20 @@ public abstract class ClientCommonPacketListenerImplMixin {
 	@Final
 	protected Minecraft minecraft;
 
-	@Inject(
-			method = "handleResourcePackPush",
-			at = @At(
-					value = "INVOKE",
-					target = "Lnet/minecraft/client/Minecraft;setScreen(Lnet/minecraft/client/gui/screens/Screen;)V"
-			),
-			cancellable = true
-	)
+	@Inject(method = "handleResourcePackPush", at = @At("HEAD"), cancellable = true)
 	private void farmingprofit$acceptHiddenPack(ClientboundResourcePackPushPacket packet, CallbackInfo ci) {
 		if (!ServerPackHider.shouldHide(packet)) {
 			return;
 		}
-		try {
-			URL url = URI.create(packet.url()).toURL();
-			this.minecraft.getDownloadedPackSource().pushPack(packet.id(), url, packet.hash());
-			this.minecraft.getDownloadedPackSource().allowServerPacks();
-			ci.cancel();
-		} catch (IllegalArgumentException | MalformedURLException ignored) {
-		}
+		Minecraft client = this.minecraft;
+		client.execute(() -> {
+			try {
+				URL url = URI.create(packet.url()).toURL();
+				client.getDownloadedPackSource().pushPack(packet.id(), url, packet.hash());
+				client.getDownloadedPackSource().allowServerPacks();
+			} catch (IllegalArgumentException | MalformedURLException ignored) {
+			}
+		});
+		ci.cancel();
 	}
 }

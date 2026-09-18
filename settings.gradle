@@ -7,6 +7,24 @@ pluginManagement {
 		mavenCentral()
 		gradlePluginPortal()
 	}
+
+	def mcTarget = settings.startParameter.projectProperties.getOrDefault('mc', '26.1.2').toString()
+	def extra = new File(settings.settingsDir, "versions/${mcTarget}.properties")
+	def loom = '1.16-SNAPSHOT'
+	if (extra.exists()) {
+		def props = new Properties()
+		extra.withInputStream { props.load(it) }
+		if (props.getProperty('loom_version')) {
+			loom = props.getProperty('loom_version')
+		}
+	}
+	resolutionStrategy {
+		eachPlugin {
+			if (requested.id.id == 'net.fabricmc.fabric-loom') {
+				useVersion(loom)
+			}
+		}
+	}
 }
 
 plugins {

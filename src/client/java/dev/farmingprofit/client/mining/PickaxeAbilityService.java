@@ -5,6 +5,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import dev.farmingprofit.FarmingProfitMod;
+import dev.farmingprofit.client.compat.ClientScreens;
 import dev.farmingprofit.client.config.ModConfig;
 import dev.farmingprofit.client.garden.Crop;
 import dev.farmingprofit.client.garden.GardenDetector;
@@ -80,7 +81,7 @@ public final class PickaxeAbilityService {
 			return;
 		}
 		LocalPlayer player = client.player;
-		if (player == null || client.gameMode == null || client.screen != null) {
+		if (player == null || client.gameMode == null || ClientScreens.isOpen(client)) {
 			return;
 		}
 		if (!GardenDetector.onSkyblock() || GardenDetector.inGarden()) {

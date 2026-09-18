@@ -10,7 +10,12 @@ permissions:
 
 jobs:
   build:
+    if: ${{ !endsWith(github.ref_name, '-26.2') }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        mc: ["26.1.2", "26.2"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -22,11 +27,65 @@ jobs:
       - name: Build
         run: |
           chmod +x gradlew
-          ./gradlew build --no-daemon
-      - name: Publish GitHub Release
+          ./gradlew build --no-daemon -Pmc=${{ matrix.mc }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: farmingprofit-${{ matrix.mc }}
+          path: |
+            build/libs/farmingprofit-*.jar
+            !build/libs/*-sources.jar
+            !build/libs/*-dev.jar
+          if-no-files-found: error
+
+  release:
+    if: ${{ !endsWith(github.ref_name, '-26.2') }}
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+      - name: Version
+        id: ver
+        run: echo "ver=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+      - name: Release Minecraft 26.1.2 (Latest)
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            build/libs/farmingprofit-*.jar
-          generate_release_notes: true
+          name: Farming Profit ${{ steps.ver.outputs.ver }} — Minecraft 26.1.2
+          make_latest: true
+          prerelease: false
+          files: dist/farmingprofit-26.1.2/*.jar
           fail_on_unmatched_files: true
+          generate_release_notes: true
+          body: |
+            ## Téléchargement
+
+            **Minecraft 26.1.2 → ce fichier** (`farmingprofit-${{ steps.ver.outputs.ver }}.jar`)
+
+            Un seul JAR dans `.minecraft/mods/`, avec Fabric Loader + Fabric API **26.1.2**.
+
+            Tu joues en **Minecraft 26.2** ? Ouvre la release **« Minecraft 26.2 »** (pas celle-ci, pas Latest) :
+            https://github.com/matteorlt/farming_mod/releases/tag/${{ github.ref_name }}-26.2
+      - name: Release Minecraft 26.2 (pas Latest)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}-26.2
+          target_commitish: ${{ github.sha }}
+          name: Farming Profit ${{ steps.ver.outputs.ver }} — Minecraft 26.2
+          make_latest: false
+          prerelease: false
+          files: dist/farmingprofit-26.2/*.jar
+          fail_on_unmatched_files: true
+          body: |
+            ## Minecraft 26.2 seulement
+
+            Fichier : `farmingprofit-${{ steps.ver.outputs.ver }}-minecraft-26.2.jar`
+
+            **N’installe pas ce JAR en 26.1.2.** La version 26.1.2 est ici (Latest) :
+            https://github.com/matteorlt/farming_mod/releases/latest
+
+            Un seul JAR dans `.minecraft/mods/`, avec Fabric Loader + Fabric API **26.2**.
+      - name: Garder 26.1.2 en Latest
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release edit "${{ github.ref_name }}" --latest

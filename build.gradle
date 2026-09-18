@@ -2,7 +2,20 @@ plugins {
 	id 'net.fabricmc.fabric-loom' version "${loom_version}"
 }
 
-version = project.mod_version
+def mcTarget = (findProperty('mc') ?: '26.1.2').toString()
+def versionFile = file("versions/${mcTarget}.properties")
+if (versionFile.exists()) {
+	def props = new Properties()
+	versionFile.withInputStream { props.load(it) }
+	props.each { key, value ->
+		setProperty(key.toString(), value.toString())
+	}
+}
+
+def mcDep = hasProperty('minecraft_dep') ? project.minecraft_dep : '~26.1'
+def mcSuffix = project.minecraft_version.toString()
+// 26.1.2 = farmingprofit-x.y.z.jar (Latest GitHub). 26.2 = farmingprofit-x.y.z-minecraft-26.2.jar
+version = mcSuffix == '26.1.2' ? project.mod_version : "${project.mod_version}-minecraft-${mcSuffix}"
 group = project.maven_group
 base.archivesName = project.archives_base_name
 
@@ -27,11 +40,12 @@ dependencies {
 }
 
 processResources {
-	def version = project.version
-	inputs.property "version", version
+	def modVersion = project.mod_version
+	inputs.property "version", modVersion
+	inputs.property "minecraft", mcDep
 
 	filesMatching("fabric.mod.json") {
-		expand "version": version
+		expand "version": modVersion, "minecraft": mcDep
 	}
 }
 

@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import dev.farmingprofit.client.compat.ClientHudHidden;
+import dev.farmingprofit.client.compat.ClientScreens;
 import dev.farmingprofit.client.config.ModConfig;
 import dev.farmingprofit.client.garden.Crop;
 import dev.farmingprofit.client.garden.FarmingTracker;
@@ -37,7 +39,7 @@ public final class ProfitHud {
 	public static void render(GuiGraphicsExtractor graphics, ModConfig config, FarmingTracker tracker, CoflBazaarService prices, boolean force) {
 		Minecraft client = Minecraft.getInstance();
 		if (!force) {
-			if (client.options.hideGui || client.screen instanceof HudMoveScreen) {
+			if (ClientHudHidden.hidden(client) || ClientScreens.current(client) instanceof HudMoveScreen) {
 				return;
 			}
 			if (!config.hudEnabled || client.player == null) {

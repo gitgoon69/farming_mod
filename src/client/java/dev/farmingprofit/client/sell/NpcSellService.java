@@ -5,9 +5,11 @@ import java.util.List;
 import java.util.Locale;
 
 import dev.farmingprofit.FarmingProfitMod;
+import dev.farmingprofit.client.compat.ClientScreens;
 import dev.farmingprofit.client.garden.SkyblockItems;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.client.player.LocalPlayer;
@@ -167,9 +169,7 @@ public final class NpcSellService {
 		soldThisRound = 0;
 		recheckCount = 0;
 		slotsToClick.clear();
-		if (client.screen != null) {
-			client.setScreen(null);
-		}
+		ClientScreens.close(client);
 		phase = Phase.WAIT_GFS;
 		FarmingProfitMod.LOGGER.debug("NPC sell /gfs {} round {}/{} first={}", gfsName, currentRound, repeatCount, first);
 		player.connection.sendCommand("gfs " + gfsName + " 9999");
@@ -233,9 +233,7 @@ public final class NpcSellService {
 		}
 
 		currentRound++;
-		if (client.screen != null) {
-			client.setScreen(null);
-		}
+		ClientScreens.close(client);
 		phase = Phase.BETWEEN_ROUNDS;
 		ticksInPhase = 0;
 	}
@@ -266,7 +264,8 @@ public final class NpcSellService {
 	}
 
 	private static boolean isNpcMenuOpen(Minecraft client) {
-		return client.screen instanceof AbstractContainerScreen<?> && !(client.screen instanceof InventoryScreen);
+		Screen screen = ClientScreens.current(client);
+		return screen instanceof AbstractContainerScreen<?> && !(screen instanceof InventoryScreen);
 	}
 
 	static boolean matches(ItemStack stack, String targetId) {

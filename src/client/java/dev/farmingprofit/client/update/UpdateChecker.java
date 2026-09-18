@@ -165,7 +165,7 @@ public final class UpdateChecker {
 			JsonObject json = JsonParser.parseString(response.body()).getAsJsonObject();
 			String tag = json.has("tag_name") ? json.get("tag_name").getAsString() : "";
 			String htmlUrl = json.has("html_url") ? json.get("html_url").getAsString() : RELEASES_PAGE;
-			String jarUrl = findJarUrl(json.getAsJsonArray("assets"));
+			String jarUrl = runningMinecraft26_2() ? null : findJarUrl(json.getAsJsonArray("assets"));
 			latest = new Release(tag, normalizeVersion(tag), htmlUrl, jarUrl);
 			lastError = null;
 		} catch (InterruptedException e) {
@@ -188,12 +188,17 @@ public final class UpdateChecker {
 		if (!updateAvailable()) {
 			throw new IllegalStateException("Déjà à jour (" + currentVersion() + ").");
 		}
+		if (runningMinecraft26_2()) {
+			throw new IllegalStateException(
+					"En Minecraft 26.2, télécharge le JAR à la main (pas d’install auto) : "
+							+ minecraft26_2PageUrl(latest));
+		}
 		if (latest.jarUrl() == null || latest.jarUrl().isBlank()) {
 			throw new IllegalStateException("La release n’a pas de JAR (asset GitHub manquant).");
 		}
 
 		Path pending = UpdateInstaller.pendingFile();
-		Path destination = UpdateInstaller.destinationJar(latest.version());
+		Path destination = UpdateInstaller.destinationJar(latest.jarUrl(), latest.version());
 		try {
 			Files.deleteIfExists(pending);
 			UpdateInstaller.download(http, latest.jarUrl(), pending);
@@ -251,18 +256,60 @@ public final class UpdateChecker {
 		if (assets == null) {
 			return null;
 		}
+		String preferred = null;
+		String fallback = null;
 		for (JsonElement element : assets) {
 			if (!element.isJsonObject()) {
 				continue;
 			}
 			JsonObject asset = element.getAsJsonObject();
 			String name = asset.has("name") ? asset.get("name").getAsString() : "";
-			String lower = name.toLowerCase(Locale.ROOT);
-			if (lower.endsWith(".jar") && !lower.contains("sources") && !lower.contains("dev")) {
-				return asset.get("browser_download_url").getAsString();
+			if (!isReleaseJar(name) || isMinecraft26_2Jar(name)) {
+				continue;
+			}
+			String url = asset.get("browser_download_url").getAsString();
+			if (isMinecraft26_1Jar(name)) {
+				preferred = url;
+			} else if (fallback == null) {
+				fallback = url;
 			}
 		}
-		return null;
+		return preferred != null ? preferred : fallback;
+	}
+
+	private static boolean isReleaseJar(String name) {
+		String lower = name.toLowerCase(Locale.ROOT);
+		return lower.endsWith(".jar") && !lower.contains("sources") && !lower.contains("dev");
+	}
+
+	private static boolean isMinecraft26_2Jar(String name) {
+		return name.toLowerCase(Locale.ROOT).contains("26.2");
+	}
+
+	private static boolean isMinecraft26_1Jar(String name) {
+		return name.toLowerCase(Locale.ROOT).contains("26.1");
+	}
+
+	private static boolean runningMinecraft26_2() {
+		return runningMinecraftVersion().startsWith("26.2");
+	}
+
+	private static String runningMinecraftVersion() {
+		return FabricLoader.getInstance()
+				.getModContainer("minecraft")
+				.map(container -> container.getMetadata().getVersion().getFriendlyString())
+				.orElse("");
+	}
+
+	private static String minecraft26_2PageUrl(Release release) {
+		if (release == null || release.tag() == null || release.tag().isBlank()) {
+			return RELEASES_PAGE;
+		}
+		String tag = release.tag();
+		if (!tag.endsWith("-26.2")) {
+			tag = tag + "-26.2";
+		}
+		return "https://github.com/" + GITHUB_REPO + "/releases/tag/" + tag;
 	}
 
 	private void announceFromCommand(Minecraft client) {
@@ -299,25 +346,35 @@ public final class UpdateChecker {
 		}
 		announced = true;
 		Release release = latest;
+		boolean minecraft26_2 = runningMinecraft26_2();
+		String githubUrl = minecraft26_2 ? minecraft26_2PageUrl(release) : release.pageUrl();
 		client.player.sendSystemMessage(Component.literal("[Farming Profit] Mise à jour " + release.version()
 				+ " disponible (actuel " + currentVersion() + ").").withStyle(ChatFormatting.GOLD));
+		if (minecraft26_2) {
+			client.player.sendSystemMessage(Component.literal(
+					"[Farming Profit] Minecraft 26.2 : télécharge le JAR à la main, l’install auto est désactivée.")
+					.withStyle(ChatFormatting.YELLOW));
+		}
 
-		MutableComponent install = Component.literal("[Installer]")
-				.withStyle(style -> style
-						.withClickEvent(new ClickEvent.RunCommand("/fprofit update install"))
-						.withHoverEvent(new HoverEvent.ShowText(Component.literal(
-								"Télécharge le JAR, ferme Minecraft, puis relance")))
-						.withColor(ChatFormatting.GREEN)
-						.withUnderlined(true));
-		MutableComponent link = Component.literal("  [Page GitHub]")
-				.withStyle(style -> withLink(style, release.pageUrl()).withColor(ChatFormatting.AQUA).withUnderlined(true));
-		MutableComponent command = Component.literal("  [Vérifier]")
+		MutableComponent line = Component.literal("");
+		if (!minecraft26_2) {
+			line = line.append(Component.literal("[Installer]")
+					.withStyle(style -> style
+							.withClickEvent(new ClickEvent.RunCommand("/fprofit update install"))
+							.withHoverEvent(new HoverEvent.ShowText(Component.literal(
+									"Télécharge le JAR 26.1.2, ferme Minecraft, puis relance")))
+							.withColor(ChatFormatting.GREEN)
+							.withUnderlined(true)));
+		}
+		line = line.append(Component.literal(minecraft26_2 ? "[JAR Minecraft 26.2]" : "  [Page GitHub]")
+				.withStyle(style -> withLink(style, githubUrl).withColor(ChatFormatting.AQUA).withUnderlined(true)));
+		line = line.append(Component.literal("  [Vérifier]")
 				.withStyle(style -> style
 						.withClickEvent(new ClickEvent.RunCommand("/fprofit update"))
 						.withHoverEvent(new HoverEvent.ShowText(Component.literal("Relance la vérif GitHub")))
 						.withColor(ChatFormatting.GRAY)
-						.withUnderlined(true));
-		client.player.sendSystemMessage(Component.literal("").append(install).append(link).append(command));
+						.withUnderlined(true)));
+		client.player.sendSystemMessage(line);
 	}
 
 	private static void tell(Minecraft client, String message, ChatFormatting color) {

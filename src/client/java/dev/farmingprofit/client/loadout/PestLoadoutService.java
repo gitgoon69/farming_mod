@@ -5,11 +5,14 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.regex.Pattern;
 
 import dev.farmingprofit.FarmingProfitMod;
+import dev.farmingprofit.client.compat.ClientMissTime;
+import dev.farmingprofit.client.compat.ClientScreens;
 import dev.farmingprofit.client.config.ModConfig;
 import dev.farmingprofit.client.garden.GardenDetector;
 import dev.farmingprofit.client.garden.SkyblockItems;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.client.player.LocalPlayer;
@@ -194,7 +197,7 @@ public final class PestLoadoutService {
 		boolean useDown = client.options.keyUse.isDown();
 		boolean rising = useDown && !wasUseDown;
 		wasUseDown = useDown;
-		if (config.pestRodLoadout && rising && phase == Phase.IDLE && client.screen == null) {
+		if (config.pestRodLoadout && rising && phase == Phase.IDLE && !ClientScreens.isOpen(client)) {
 			if (isFishingRod(player.getMainHandItem()) || isFishingRod(player.getOffhandItem())) {
 				quiet = false;
 				start(client, player, !pestMode, false);
@@ -254,9 +257,7 @@ public final class PestLoadoutService {
 			}
 			case CLOSING -> {
 				if (ticksInPhase >= CLOSE_DELAY_TICKS) {
-					if (client.screen != null) {
-						client.setScreen(null);
-					}
+					ClientScreens.close(client);
 					if (!quiet) {
 						chat("Loadout " + pendingTarget + " équipé.", ChatFormatting.GREEN);
 					}
@@ -286,9 +287,7 @@ public final class PestLoadoutService {
 		ticksInPhase = 0;
 		resumeAttackTicks = 0;
 		phase = Phase.OPEN_MENU;
-		if (client.screen != null) {
-			client.setScreen(null);
-		}
+		ClientScreens.close(client);
 		player.connection.sendCommand("loadout");
 	}
 
@@ -388,10 +387,11 @@ public final class PestLoadoutService {
 	}
 
 	private static boolean isLoadoutMenu(Minecraft client) {
-		if (!(client.screen instanceof AbstractContainerScreen<?>) || client.screen instanceof InventoryScreen) {
+		Screen screen = ClientScreens.current(client);
+		if (!(screen instanceof AbstractContainerScreen<?>) || screen instanceof InventoryScreen) {
 			return false;
 		}
-		String title = client.screen.getTitle().getString().toLowerCase(Locale.ROOT);
+		String title = screen.getTitle().getString().toLowerCase(Locale.ROOT);
 		return title.contains("loadout");
 	}
 
@@ -431,7 +431,7 @@ public final class PestLoadoutService {
 		if (resumeAttackTicks <= 0 || running()) {
 			return;
 		}
-		if (client.screen != null || !client.mouseHandler.isMouseGrabbed()) {
+		if (ClientScreens.isOpen(client) || !client.mouseHandler.isMouseGrabbed()) {
 			return;
 		}
 		resumeAttackTicks--;
@@ -441,7 +441,7 @@ public final class PestLoadoutService {
 		if (client.options.keyAttack.isDown()) {
 			return;
 		}
-		client.missTime = 0;
+		ClientMissTime.clear(client);
 		client.options.keyAttack.setDown(true);
 	}
 

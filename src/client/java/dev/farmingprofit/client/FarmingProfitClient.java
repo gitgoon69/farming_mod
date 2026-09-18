@@ -8,6 +8,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 
 import dev.farmingprofit.FarmingProfitMod;
+import dev.farmingprofit.client.compat.ClientScreens;
 import dev.farmingprofit.client.config.ModConfig;
 import dev.farmingprofit.client.garden.Crop;
 import dev.farmingprofit.client.garden.FarmingTracker;
@@ -270,7 +271,7 @@ public class FarmingProfitClient implements ClientModInitializer {
 
 	private static int openMoveScreen(CommandContext<FabricClientCommandSource> ctx) {
 		Minecraft client = ctx.getSource().getClient();
-		client.execute(() -> client.setScreen(new HudMoveScreen(config, tracker, prices)));
+		client.execute(() -> ClientScreens.set(client, new HudMoveScreen(config, tracker, prices)));
 		feedback(ctx, "Glisse le HUD, puis Échap ou Terminé.");
 		return 1;
 	}

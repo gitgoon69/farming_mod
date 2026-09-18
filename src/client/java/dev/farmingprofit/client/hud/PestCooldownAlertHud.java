@@ -1,5 +1,6 @@
 package dev.farmingprofit.client.hud;
 
+import dev.farmingprofit.client.compat.ClientScreens;
 import dev.farmingprofit.client.config.ModConfig;
 import dev.farmingprofit.client.garden.PestCooldownTracker;
 import net.minecraft.client.DeltaTracker;
@@ -21,7 +22,7 @@ public final class PestCooldownAlertHud {
 			PestCooldownTracker tracker
 	) {
 		Minecraft client = Minecraft.getInstance();
-		if (client.player == null || client.screen instanceof HudMoveScreen) {
+		if (client.player == null || ClientScreens.current(client) instanceof HudMoveScreen) {
 			return;
 		}
 		if (!tracker.alerting(config)) {
