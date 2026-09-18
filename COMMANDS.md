@@ -106,6 +106,8 @@ Hypixel force le pack **World Specific Resources Hypixel Skyblock**. Le mod l’
 | --- | --- |
 | `/fprofit serverpack` | Active ou désactive la priorité basse (défaut : ON) |
 
+Avec **Polar**, ces mixins (pack + hitbox crops) sont désactivés : Polar accroche les mêmes méthodes en natif, ce qui crashait Windows (`ntdll`). HUD, pest, vente et logbook restent actifs.
+
 ## Vente NPC (sacks + cookie menu)
 
 Vide le sack, ouvre `/boostercookiemenu`, puis **middle-click** uniquement l’item indiqué (100 ms entre chaque slot). Recheck l’inventaire à la fin de chaque passe.

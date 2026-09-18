@@ -32,9 +32,11 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
+import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.fabricmc.fabric.api.event.client.player.ClientPlayerBlockBreakEvents;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 
 public class FarmingProfitClient implements ClientModInitializer {
@@ -73,6 +75,17 @@ public class FarmingProfitClient implements ClientModInitializer {
 				FarmingProfitMod.id("pest_cooldown_alert"),
 				(graphics, delta) -> PestCooldownAlertHud.render(graphics, delta, config, pestCooldown)
 		);
+
+		ScreenEvents.AFTER_INIT.register((client, screen, width, height) -> {
+			if (!(screen instanceof AbstractContainerScreen<?>)) {
+				return;
+			}
+			ScreenEvents.afterExtract(screen).register((openScreen, graphics, mouseX, mouseY, tickProgress) -> {
+				if (openScreen instanceof AbstractContainerScreen<?> container) {
+					VisitorLogbookStats.render(container, graphics);
+				}
+			});
+		});
 
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
 			GardenDetector.tick(client);

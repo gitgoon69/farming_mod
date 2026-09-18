@@ -38,7 +38,7 @@ Java 25 requis.
 ./gradlew.bat build "-Pmc=26.2"
 ```
 
-JAR : `build/libs/farmingprofit-1.0.13.jar` (26.1.2) et `farmingprofit-1.0.13-minecraft-26.2.jar` (26.2)
+JAR : `build/libs/farmingprofit-1.0.14.jar` (26.1.2) et `farmingprofit-1.0.14-minecraft-26.2.jar` (26.2)
 
 ## Mise à jour
 

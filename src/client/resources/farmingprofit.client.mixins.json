@@ -3,9 +3,9 @@
 	"minVersion": "0.8",
 	"package": "dev.farmingprofit.client.mixin",
 	"compatibilityLevel": "JAVA_25",
+	"plugin": "dev.farmingprofit.client.mixin.FarmingProfitMixinPlugin",
 	"client": [
 		"CropHitboxMixin",
-		"AbstractContainerScreenMixin",
 		"DownloadedPackSourceMixin",
 		"ClientCommonPacketListenerImplMixin",
 		"PackRepositoryMixin"

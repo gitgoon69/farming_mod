@@ -1,5 +1,6 @@
 package dev.farmingprofit.client.garden;
 
+import java.lang.reflect.Field;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Locale;
@@ -37,6 +38,9 @@ public final class VisitorLogbookStats {
 
 	private static final Map<String, VisitorEntry> visitors = new LinkedHashMap<>();
 	private static final Set<Integer> seenPages = new HashSet<>();
+	private static final Field LEFT_POS = field("leftPos");
+	private static final Field TOP_POS = field("topPos");
+	private static final Field IMAGE_WIDTH = field("imageWidth");
 	private static boolean open;
 	private static int totalPages;
 
@@ -63,6 +67,10 @@ public final class VisitorLogbookStats {
 		seenPages.clear();
 		open = false;
 		totalPages = 0;
+	}
+
+	public static void render(AbstractContainerScreen<?> screen, GuiGraphicsExtractor graphics) {
+		render(screen, graphics, intField(screen, LEFT_POS, 0), intField(screen, TOP_POS, 0), intField(screen, IMAGE_WIDTH, 176));
 	}
 
 	public static void render(AbstractContainerScreen<?> screen, GuiGraphicsExtractor graphics, int leftPos, int topPos, int imageWidth) {
@@ -150,6 +158,27 @@ public final class VisitorLogbookStats {
 		} else if (totalPages == 0) {
 			seenPages.add(1);
 			totalPages = 1;
+		}
+	}
+
+	private static Field field(String name) {
+		try {
+			Field field = AbstractContainerScreen.class.getDeclaredField(name);
+			field.setAccessible(true);
+			return field;
+		} catch (NoSuchFieldException e) {
+			return null;
+		}
+	}
+
+	private static int intField(AbstractContainerScreen<?> screen, Field field, int fallback) {
+		if (field == null) {
+			return fallback;
+		}
+		try {
+			return field.getInt(screen);
+		} catch (IllegalAccessException e) {
+			return fallback;
 		}
 	}
 

@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Locale;
 
 import dev.farmingprofit.client.FarmingProfitClient;
+import dev.farmingprofit.client.compat.PolarPresence;
 import dev.farmingprofit.client.config.ModConfig;
 import dev.farmingprofit.client.garden.GardenDetector;
 import net.minecraft.client.Minecraft;
@@ -20,11 +21,17 @@ public final class ServerPackHider {
 	}
 
 	public static boolean enabled() {
+		if (PolarPresence.detected()) {
+			return false;
+		}
 		ModConfig config = FarmingProfitClient.config();
 		return config != null && config.hideServerResourcePack && isHypixelPack();
 	}
 
 	public static boolean shouldHide(ClientboundResourcePackPushPacket packet) {
+		if (PolarPresence.detected()) {
+			return false;
+		}
 		ModConfig config = FarmingProfitClient.config();
 		if (config == null || !config.hideServerResourcePack) {
 			return false;
