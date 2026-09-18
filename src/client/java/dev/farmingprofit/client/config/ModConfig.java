@@ -31,6 +31,8 @@ public final class ModConfig {
 	public String farmLoadoutName = "Farm";
 	/** Vérifie GitHub (matteorlt/farming_mod) au login. */
 	public boolean checkUpdates = true;
+	/** Envoie UUID + pseudo + version à Supabase au login (toi seul vois la table). */
+	public boolean usagePing = true;
 	/** Gros titre + son à 2m50 de cooldown pest, compte à rebours 5s. */
 	public boolean pestCooldownAlert = true;
 	/** Déclenche l’alerte quand le cooldown tab atteint ce temps (170 = 2m50). */

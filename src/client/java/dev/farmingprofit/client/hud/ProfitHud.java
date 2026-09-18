@@ -5,11 +5,11 @@ import java.util.List;
 import java.util.Locale;
 
 import dev.farmingprofit.client.compat.ClientHudHidden;
-import dev.farmingprofit.client.compat.ClientScreens;
 import dev.farmingprofit.client.config.ModConfig;
 import dev.farmingprofit.client.garden.Crop;
 import dev.farmingprofit.client.garden.FarmingTracker;
 import dev.farmingprofit.client.garden.SkyblockItems;
+import dev.farmingprofit.client.gui.SettingsScreen;
 import dev.farmingprofit.client.prices.CoflBazaarService;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
@@ -39,7 +39,7 @@ public final class ProfitHud {
 	public static void render(GuiGraphicsExtractor graphics, ModConfig config, FarmingTracker tracker, CoflBazaarService prices, boolean force) {
 		Minecraft client = Minecraft.getInstance();
 		if (!force) {
-			if (ClientHudHidden.hidden(client) || ClientScreens.current(client) instanceof HudMoveScreen) {
+			if (ClientHudHidden.hidden(client) || SettingsScreen.blockingHud(client)) {
 				return;
 			}
 			if (!config.hudEnabled || client.player == null) {

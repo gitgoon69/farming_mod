@@ -2,11 +2,13 @@ package dev.farmingprofit.client.hud;
 
 import org.lwjgl.glfw.GLFW;
 
+import dev.farmingprofit.client.compat.ClientScreens;
 import dev.farmingprofit.client.config.ModConfig;
 import dev.farmingprofit.client.garden.FarmingTracker;
 import dev.farmingprofit.client.prices.CoflBazaarService;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
@@ -20,15 +22,21 @@ public class HudMoveScreen extends Screen {
 	private final ModConfig config;
 	private final FarmingTracker tracker;
 	private final CoflBazaarService prices;
+	private final Screen parent;
 	private boolean dragging;
 	private double dragOffsetX;
 	private double dragOffsetY;
 
 	public HudMoveScreen(ModConfig config, FarmingTracker tracker, CoflBazaarService prices) {
+		this(config, tracker, prices, null);
+	}
+
+	public HudMoveScreen(ModConfig config, FarmingTracker tracker, CoflBazaarService prices, Screen parent) {
 		super(Component.literal("Déplacer Farming Profit"));
 		this.config = config;
 		this.tracker = tracker;
 		this.prices = prices;
+		this.parent = parent;
 	}
 
 	@Override
@@ -131,6 +139,10 @@ public class HudMoveScreen extends Screen {
 	@Override
 	public void onClose() {
 		config.save();
+		if (parent != null) {
+			ClientScreens.set(Minecraft.getInstance(), parent);
+			return;
+		}
 		super.onClose();
 	}
 

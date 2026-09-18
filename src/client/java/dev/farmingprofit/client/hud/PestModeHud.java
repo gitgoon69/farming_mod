@@ -1,8 +1,8 @@
 package dev.farmingprofit.client.hud;
 
 import dev.farmingprofit.client.compat.ClientHudHidden;
-import dev.farmingprofit.client.compat.ClientScreens;
 import dev.farmingprofit.client.config.ModConfig;
+import dev.farmingprofit.client.gui.SettingsScreen;
 import dev.farmingprofit.client.loadout.PestLoadoutService;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
@@ -21,7 +21,7 @@ public final class PestModeHud {
 
 	public static void render(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker, ModConfig config, PestLoadoutService pest) {
 		Minecraft client = Minecraft.getInstance();
-		if (ClientHudHidden.hidden(client) || client.player == null || ClientScreens.current(client) instanceof HudMoveScreen) {
+		if (ClientHudHidden.hidden(client) || client.player == null || SettingsScreen.blockingHud(client)) {
 			return;
 		}
 		if (!pest.pestMode()) {

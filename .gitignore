@@ -3,6 +3,9 @@ build/
 out/
 classes/
 .idea/
+.env
+.env.*
+!.env.example
 *.iml
 *.ipr
 *.iws

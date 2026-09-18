@@ -2,12 +2,21 @@
 
 Toutes les commandes commencent par **`/fprofit`**.
 
+## Menu in-game (26.1.2)
+
+Toutes les options (HUD, hitbox, pest, pioche, pack, updates) sont dans un écran unique, icônes vanilla.
+
+| Commande | Description |
+| --- | --- |
+| `/fprofit` | Ouvre le menu |
+| `/fprofit menu` | Ouvre le menu |
+| Touche `Ouvrir le menu Farming Profit` | Raccourci (non assigné par défaut, Contrôles) |
+
 ## Aide
 
 | Commande | Description |
 | --- | --- |
-| `/fprofit` | Affiche l’aide |
-| `/fprofit help` | Affiche l’aide |
+| `/fprofit help` | Affiche l’aide chat |
 
 ## HUD (coins / heure)
 

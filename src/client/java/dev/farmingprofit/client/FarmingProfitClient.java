@@ -15,6 +15,7 @@ import dev.farmingprofit.client.garden.FarmingTracker;
 import dev.farmingprofit.client.garden.GardenDetector;
 import dev.farmingprofit.client.garden.PestCooldownTracker;
 import dev.farmingprofit.client.garden.VisitorLogbookStats;
+import dev.farmingprofit.client.gui.SettingsScreen;
 import dev.farmingprofit.client.hud.HudMoveScreen;
 import dev.farmingprofit.client.hud.PestCooldownAlertHud;
 import dev.farmingprofit.client.hud.PestModeHud;
@@ -24,7 +25,9 @@ import dev.farmingprofit.client.mining.PickaxeAbilityService;
 import dev.farmingprofit.client.prices.CoflBazaarService;
 import dev.farmingprofit.client.sell.NpcSellService;
 import dev.farmingprofit.client.update.UpdateChecker;
+import dev.farmingprofit.client.usage.UsagePingService;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
@@ -35,9 +38,11 @@ import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.fabricmc.fabric.api.event.client.player.ClientPlayerBlockBreakEvents;
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
+import org.lwjgl.glfw.GLFW;
 
 public class FarmingProfitClient implements ClientModInitializer {
 	private static ModConfig config;
@@ -48,6 +53,8 @@ public class FarmingProfitClient implements ClientModInitializer {
 	private static PickaxeAbilityService pickaxeAbility;
 	private static PestCooldownTracker pestCooldown;
 	private static UpdateChecker updates;
+	private static UsagePingService usagePing;
+	private static KeyMapping openMenuKey;
 
 	@Override
 	public void onInitializeClient() {
@@ -60,6 +67,12 @@ public class FarmingProfitClient implements ClientModInitializer {
 		pickaxeAbility = new PickaxeAbilityService(config);
 		pestCooldown = new PestCooldownTracker();
 		updates = new UpdateChecker();
+		usagePing = new UsagePingService();
+		openMenuKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
+				"key.farmingprofit.open",
+				GLFW.GLFW_KEY_UNKNOWN,
+				KeyMapping.Category.MISC
+		));
 
 		HudElementRegistry.attachElementBefore(
 				VanillaHudElements.CHAT,
@@ -88,6 +101,13 @@ public class FarmingProfitClient implements ClientModInitializer {
 		});
 
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
+			if (openMenuKey.consumeClick()) {
+				if (ClientScreens.current(client) instanceof SettingsScreen) {
+					ClientScreens.close(client);
+				} else if (!ClientScreens.isOpen(client)) {
+					openMenu(client);
+				}
+			}
 			GardenDetector.tick(client);
 			tracker.tick(client, config);
 			prices.tick();
@@ -123,6 +143,9 @@ public class FarmingProfitClient implements ClientModInitializer {
 			if (config.checkUpdates) {
 				updates.onJoin();
 			}
+			if (config.usagePing) {
+				usagePing.onJoin();
+			}
 		});
 
 		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
@@ -139,7 +162,8 @@ public class FarmingProfitClient implements ClientModInitializer {
 
 		ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> dispatcher.register(
 				literal("fprofit")
-						.executes(FarmingProfitClient::help)
+						.executes(FarmingProfitClient::openSettings)
+						.then(literal("menu").executes(FarmingProfitClient::openSettings))
 						.then(literal("reset").executes(ctx -> {
 							tracker.resetSession();
 							feedback(ctx, "Session reset.");
@@ -282,6 +306,17 @@ public class FarmingProfitClient implements ClientModInitializer {
 		FarmingProfitMod.LOGGER.info("Farming Profit client prêt. Commande: /fprofit");
 	}
 
+	private static int openSettings(CommandContext<FabricClientCommandSource> ctx) {
+		openMenu(ctx.getSource().getClient());
+		feedback(ctx, "Menu Farming Profit.");
+		return 1;
+	}
+
+	public static void openMenu(Minecraft client) {
+		client.execute(() -> ClientScreens.set(client, new SettingsScreen(
+				config, tracker, prices, pestLoadout, pickaxeAbility, updates)));
+	}
+
 	private static int openMoveScreen(CommandContext<FabricClientCommandSource> ctx) {
 		Minecraft client = ctx.getSource().getClient();
 		client.execute(() -> ClientScreens.set(client, new HudMoveScreen(config, tracker, prices)));
@@ -290,7 +325,7 @@ public class FarmingProfitClient implements ClientModInitializer {
 	}
 
 	private static int help(CommandContext<FabricClientCommandSource> ctx) {
-		ctx.getSource().sendFeedback(Component.literal("Farming Profit — /fprofit sell <item> [fois] | pest | pestauto | pestalert | pickaxe | serverpack | update [install] | sell cancel | move [x y|reset] | reset | toggle | hitbox | prices | mode <OFFER|INSTANT>").withStyle(ChatFormatting.GOLD));
+		ctx.getSource().sendFeedback(Component.literal("Farming Profit — /fprofit (menu) | menu | sell <item> [fois] | pest | pestauto | pestalert | pickaxe | serverpack | update [install] | sell cancel | move [x y|reset] | reset | toggle | hitbox | prices | mode <OFFER|INSTANT>").withStyle(ChatFormatting.GOLD));
 		return 1;
 	}
 

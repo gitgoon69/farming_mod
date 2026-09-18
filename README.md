@@ -18,6 +18,7 @@ L’install auto en jeu ne télécharge **jamais** le JAR 26.2.
 ## Fonctionnalités
 
 - HUD coins/heure (prix Bazaar Cofl)
+- Menu in-game (`/fprofit` ou `/fprofit menu`) : toutes les options, icônes vanilla
 - Hitbox crops mature = 1 bloc
 - Visitor's Logbook : unique served
 - Loadout Pest / Farm via canne à pêche
@@ -38,7 +39,7 @@ Java 25 requis.
 ./gradlew.bat build "-Pmc=26.2"
 ```
 
-JAR : `build/libs/farmingprofit-1.0.14.jar` (26.1.2) et `farmingprofit-1.0.14-minecraft-26.2.jar` (26.2)
+JAR : `build/libs/farmingprofit-1.0.15.jar` (26.1.2) et `farmingprofit-1.0.15-minecraft-26.2.jar` (26.2)
 
 ## Mise à jour
 
