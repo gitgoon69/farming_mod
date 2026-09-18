@@ -1,5 +1,5 @@
--- Liste des joueurs qui lancent le mod. Lecture : dashboard Supabase (toi seul).
--- Le JAR n'appelle que ping_mod_user() : écriture, jamais SELECT.
+-- Players who launch the mod. Read access: Supabase dashboard (you only).
+-- The JAR only calls ping_mod_user(): write, never SELECT.
 
 create table if not exists public.mod_users (
 	uuid uuid primary key,

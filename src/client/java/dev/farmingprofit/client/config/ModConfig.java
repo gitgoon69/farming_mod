@@ -23,27 +23,27 @@ public final class ModConfig {
 	public String priceMode = "OFFER";
 	public boolean includeSeeds = true;
 	public int afkTimeoutSeconds = 15;
-	/** Hitbox de visée : cube 1×1×1 si mature, plus basse sinon (blé, carottes, patates, nether wart, champignons, cacao). */
+	/** Aim hitbox: 1×1×1 cube when mature, lowest otherwise (wheat, carrots, potatoes, nether wart, mushrooms, cocoa). */
 	public boolean fullCropHitboxes = true;
-	/** Clic droit canne → /loadout → Pest, reclic → Farm. */
+	/** Right-click rod → /loadout → Pest, click again → Farm. */
 	public boolean pestRodLoadout = true;
 	public String pestLoadoutName = "Pest";
 	public String farmLoadoutName = "Farm";
-	/** Vérifie GitHub (matteorlt/farming_mod) au login. */
+	/** Check GitHub (matteorlt/farming_mod) on login. */
 	public boolean checkUpdates = true;
-	/** Envoie UUID + pseudo + version à Supabase au login (toi seul vois la table). */
+	/** Sends UUID + username + version to Supabase on login (private table). */
 	public boolean usagePing = true;
-	/** Gros titre + son à 2m50 de cooldown pest, compte à rebours 5s. */
+	/** Large title + sound at 2m50 pest cooldown, 5s countdown. */
 	public boolean pestCooldownAlert = true;
-	/** Déclenche l’alerte quand le cooldown tab atteint ce temps (170 = 2m50). */
+	/** Fires the alert when tab cooldown reaches this time (170 = 2m50). */
 	public int pestCooldownAlertAtSeconds = 170;
-	/** Durée du compte à rebours affiché (secondes). */
+	/** Displayed countdown length (seconds). */
 	public int pestCooldownAlertCountdown = 5;
-	/** À 2m50 → loadout Pest, 0.5–1s après le spawn → /setspawn + loadout Farm. */
+	/** At 2m50 → Pest loadout, 0.5–1s after spawn → /setspawn + Farm loadout. */
 	public boolean autoPestLoadout = true;
-	/** Pack serveur Hypixel en tout dernier (vanilla + tes packs passent devant). */
+	/** Hypixel server pack last (vanilla + your packs take priority). */
 	public boolean hideServerResourcePack = true;
-	/** Mining : clic droit auto quand l’ability pioche est prête (cooldown à 0). */
+	/** Mining: auto right-click when pickaxe ability is ready (cooldown at 0). */
 	public boolean autoPickaxeAbility = true;
 
 	public static ModConfig load() {
@@ -56,7 +56,7 @@ public final class ModConfig {
 			ModConfig loaded = GSON.fromJson(reader, ModConfig.class);
 			return loaded != null ? loaded : new ModConfig();
 		} catch (IOException e) {
-			FarmingProfitMod.LOGGER.warn("Impossible de lire farmingprofit.json", e);
+			FarmingProfitMod.LOGGER.warn("Could not read farmingprofit.json", e);
 			return new ModConfig();
 		}
 	}
@@ -68,7 +68,7 @@ public final class ModConfig {
 				GSON.toJson(this, writer);
 			}
 		} catch (IOException e) {
-			FarmingProfitMod.LOGGER.warn("Impossible d'écrire farmingprofit.json", e);
+			FarmingProfitMod.LOGGER.warn("Could not write farmingprofit.json", e);
 		}
 	}
 

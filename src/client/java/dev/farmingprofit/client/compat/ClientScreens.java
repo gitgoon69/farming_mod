@@ -11,8 +11,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 
 /**
- * Accès à l’écran courant compatible 26.1.2 ({@code Minecraft.screen}/{@code setScreen})
- * et 26.2 ({@code Gui#screen()}/{@code Gui#setScreen}).
+ * Current-screen access for 26.1.2 ({@code Minecraft.screen}/{@code setScreen})
+ * and 26.2 ({@code Gui#screen()}/{@code Gui#setScreen}).
  */
 public final class ClientScreens {
 	private static final MethodHandle GET;
@@ -59,7 +59,7 @@ public final class ClientScreens {
 		try {
 			return (Screen) GET.invoke(client);
 		} catch (Throwable t) {
-			throw new RuntimeException("Impossible de lire l'écran courant", t);
+			throw new RuntimeException("Could not read the current screen", t);
 		}
 	}
 
@@ -67,7 +67,7 @@ public final class ClientScreens {
 		try {
 			SET.invoke(client, screen);
 		} catch (Throwable t) {
-			throw new RuntimeException("Impossible d'ouvrir un écran", t);
+			throw new RuntimeException("Could not open a screen", t);
 		}
 	}
 

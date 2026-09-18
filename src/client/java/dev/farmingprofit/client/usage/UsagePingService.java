@@ -18,8 +18,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.User;
 
 /**
- * Ping anonyme vers Supabase au login (UUID + pseudo + version).
- * Clé publishable uniquement : pas d’accès lecture à la table.
+ * Anonymous ping to Supabase on login (UUID + username + version).
+ * Publishable key only: no table read access.
  */
 public final class UsagePingService {
 	private static final String SUPABASE_URL = "https://nbbfyqopodfyocjdojbj.supabase.co";

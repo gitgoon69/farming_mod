@@ -19,7 +19,7 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 /**
- * Mature : cube 1×1×1. Pas mature : hitbox la plus basse. Cacao inclus.
+ * Mature: 1×1×1 cube. Not mature: lowest hitbox. Cocoa included.
  */
 @Mixin(value = {
 		CropBlock.class,

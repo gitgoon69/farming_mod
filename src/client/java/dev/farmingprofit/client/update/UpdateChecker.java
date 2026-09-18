@@ -32,8 +32,8 @@ import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 
 /**
- * Compare la version locale à la dernière release GitHub, puis installe
- * depuis le jeu (download → script détaché → fermeture de Minecraft).
+ * Compares the local version to the latest GitHub release, then installs
+ * from in-game (download → detached script → close Minecraft).
  */
 public final class UpdateChecker {
 	public static final String GITHUB_REPO = "matteorlt/farming_mod";
@@ -90,22 +90,22 @@ public final class UpdateChecker {
 	public void installNow() {
 		Minecraft client = Minecraft.getInstance();
 		if (installing) {
-			tell(client, "Installation déjà en cours…", ChatFormatting.YELLOW);
+			tell(client, "Install already running…", ChatFormatting.YELLOW);
 			return;
 		}
 		if (UpdateInstaller.development()) {
-			tell(client, "Install auto désactivée en environnement de dev (Loom).", ChatFormatting.RED);
+			tell(client, "Auto-install disabled in the dev environment (Loom).", ChatFormatting.RED);
 			return;
 		}
 		installing = true;
-		tell(client, "Téléchargement de la mise à jour…", ChatFormatting.YELLOW);
+		tell(client, "Downloading update…", ChatFormatting.YELLOW);
 		CompletableFuture.runAsync(this::doInstall, executor).whenComplete((_, error) -> {
 			if (error != null) {
 				installing = false;
 				FarmingProfitMod.LOGGER.warn("Install update failed: {}", error.toString());
 				Minecraft.getInstance().execute(() -> tell(
 						Minecraft.getInstance(),
-						"Échec de l’install : " + rootMessage(error),
+						"Install failed: " + rootMessage(error),
 						ChatFormatting.RED));
 			}
 		});
@@ -133,7 +133,7 @@ public final class UpdateChecker {
 			client.execute(() -> {
 				if (fromCommand) {
 					if (error != null) {
-						tell(client, "Vérif GitHub échouée : " + rootMessage(error), ChatFormatting.RED);
+						tell(client, "GitHub check failed: " + rootMessage(error), ChatFormatting.RED);
 						return;
 					}
 					announceFromCommand(client);
@@ -170,7 +170,7 @@ public final class UpdateChecker {
 			lastError = null;
 		} catch (InterruptedException e) {
 			Thread.currentThread().interrupt();
-			throw new RuntimeException("Vérif interrompue", e);
+			throw new RuntimeException("Check interrupted", e);
 		} catch (Exception e) {
 			lastError = e.toString();
 			FarmingProfitMod.LOGGER.warn("Update check: {}", e.toString());
@@ -183,18 +183,18 @@ public final class UpdateChecker {
 			fetchLatest();
 		}
 		if ("no-release".equals(lastError) || latest == null) {
-			throw new IllegalStateException("Pas de release GitHub à installer.");
+			throw new IllegalStateException("No GitHub release to install.");
 		}
 		if (!updateAvailable()) {
-			throw new IllegalStateException("Déjà à jour (" + currentVersion() + ").");
+			throw new IllegalStateException("Already up to date (" + currentVersion() + ").");
 		}
 		if (runningMinecraft26_2()) {
 			throw new IllegalStateException(
-					"En Minecraft 26.2, télécharge le JAR à la main (pas d’install auto) : "
+					"On Minecraft 26.2, download the JAR by hand (no auto-install): "
 							+ minecraft26_2PageUrl(latest));
 		}
 		if (latest.jarUrl() == null || latest.jarUrl().isBlank()) {
-			throw new IllegalStateException("La release n’a pas de JAR (asset GitHub manquant).");
+			throw new IllegalStateException("The release has no JAR (missing GitHub asset).");
 		}
 
 		Path pending = UpdateInstaller.pendingFile();
@@ -227,7 +227,7 @@ public final class UpdateChecker {
 
 		Minecraft client = Minecraft.getInstance();
 		client.execute(() -> {
-			tell(client, "Mise à jour " + latest.version() + " téléchargée. Minecraft va se fermer — relance le jeu.",
+			tell(client, "Update " + latest.version() + " downloaded. Minecraft will close — relaunch the game.",
 					ChatFormatting.GREEN);
 			quitInTicks = 40;
 		});
@@ -238,7 +238,7 @@ public final class UpdateChecker {
 			byte[] head = in.readNBytes(4);
 			if (head.length < 2 || head[0] != 'P' || head[1] != 'K') {
 				Files.deleteIfExists(file);
-				throw new IOException("Le fichier téléchargé n’est pas un JAR.");
+				throw new IOException("Downloaded file is not a JAR.");
 			}
 		}
 	}
@@ -317,15 +317,15 @@ public final class UpdateChecker {
 			return;
 		}
 		if ("no-release".equals(lastError)) {
-			tell(client, "Pas encore de release GitHub.", ChatFormatting.YELLOW);
+			tell(client, "No GitHub release yet.", ChatFormatting.YELLOW);
 			return;
 		}
 		if (lastError != null && latest == null) {
-			tell(client, "Vérif GitHub échouée : " + lastError, ChatFormatting.RED);
+			tell(client, "GitHub check failed: " + lastError, ChatFormatting.RED);
 			return;
 		}
 		if (!updateAvailable()) {
-			tell(client, "Déjà à jour (" + currentVersion() + ").", ChatFormatting.GREEN);
+			tell(client, "Already up to date (" + currentVersion() + ").", ChatFormatting.GREEN);
 			return;
 		}
 		announceIfNeeded(client, true);
@@ -348,30 +348,30 @@ public final class UpdateChecker {
 		Release release = latest;
 		boolean minecraft26_2 = runningMinecraft26_2();
 		String githubUrl = minecraft26_2 ? minecraft26_2PageUrl(release) : release.pageUrl();
-		client.player.sendSystemMessage(Component.literal("[Farming Profit] Mise à jour " + release.version()
-				+ " disponible (actuel " + currentVersion() + ").").withStyle(ChatFormatting.GOLD));
+		client.player.sendSystemMessage(Component.literal("[Farming Profit] Update " + release.version()
+				+ " available (current " + currentVersion() + ").").withStyle(ChatFormatting.GOLD));
 		if (minecraft26_2) {
 			client.player.sendSystemMessage(Component.literal(
-					"[Farming Profit] Minecraft 26.2 : télécharge le JAR à la main, l’install auto est désactivée.")
+					"[Farming Profit] Minecraft 26.2: download the JAR by hand, auto-install is disabled.")
 					.withStyle(ChatFormatting.YELLOW));
 		}
 
 		MutableComponent line = Component.literal("");
 		if (!minecraft26_2) {
-			line = line.append(Component.literal("[Installer]")
+			line = line.append(Component.literal("[Install]")
 					.withStyle(style -> style
 							.withClickEvent(new ClickEvent.RunCommand("/fprofit update install"))
 							.withHoverEvent(new HoverEvent.ShowText(Component.literal(
-									"Télécharge le JAR 26.1.2, ferme Minecraft, puis relance")))
+									"Download the 26.1.2 JAR, close Minecraft, then relaunch")))
 							.withColor(ChatFormatting.GREEN)
 							.withUnderlined(true)));
 		}
-		line = line.append(Component.literal(minecraft26_2 ? "[JAR Minecraft 26.2]" : "  [Page GitHub]")
+		line = line.append(Component.literal(minecraft26_2 ? "[Minecraft 26.2 JAR]" : "  [GitHub page]")
 				.withStyle(style -> withLink(style, githubUrl).withColor(ChatFormatting.AQUA).withUnderlined(true)));
-		line = line.append(Component.literal("  [Vérifier]")
+		line = line.append(Component.literal("  [Check]")
 				.withStyle(style -> style
 						.withClickEvent(new ClickEvent.RunCommand("/fprofit update"))
-						.withHoverEvent(new HoverEvent.ShowText(Component.literal("Relance la vérif GitHub")))
+						.withHoverEvent(new HoverEvent.ShowText(Component.literal("Run the GitHub check again")))
 						.withColor(ChatFormatting.GRAY)
 						.withUnderlined(true)));
 		client.player.sendSystemMessage(line);

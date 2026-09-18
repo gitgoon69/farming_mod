@@ -16,7 +16,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 
 /**
- * Écran pour déplacer le HUD à la souris (comme SkyHanni / Skyblocker).
+ * Screen to drag the HUD with the mouse (like SkyHanni / Skyblocker).
  */
 public class HudMoveScreen extends Screen {
 	private final ModConfig config;
@@ -32,7 +32,7 @@ public class HudMoveScreen extends Screen {
 	}
 
 	public HudMoveScreen(ModConfig config, FarmingTracker tracker, CoflBazaarService prices, Screen parent) {
-		super(Component.literal("Déplacer Farming Profit"));
+		super(Component.literal("Move Farming Profit"));
 		this.config = config;
 		this.tracker = tracker;
 		this.prices = prices;
@@ -43,12 +43,12 @@ public class HudMoveScreen extends Screen {
 	protected void init() {
 		int cx = this.width / 2;
 		int by = this.height - 28;
-		this.addRenderableWidget(Button.builder(Component.literal("Réinitialiser"), button -> {
+		this.addRenderableWidget(Button.builder(Component.literal("Reset"), button -> {
 			config.hudX = 8;
 			config.hudY = 48;
 			config.save();
 		}).bounds(cx - 160, by, 100, 20).build());
-		this.addRenderableWidget(Button.builder(Component.literal("Terminé"), button -> this.onClose())
+		this.addRenderableWidget(Button.builder(Component.literal("Done"), button -> this.onClose())
 				.bounds(cx - 50, by, 100, 20).build());
 	}
 
@@ -71,7 +71,7 @@ public class HudMoveScreen extends Screen {
 		graphics.fill(box.x() - 1, box.y(), box.x(), box.y() + box.height(), 0xFFFFD54A);
 		graphics.fill(box.x() + box.width(), box.y(), box.x() + box.width() + 1, box.y() + box.height(), 0xFFFFD54A);
 
-		String hint = "Glisse le HUD  •  Flèches pour 1px  •  Échap pour valider  •  x=" + config.hudX + " y=" + config.hudY;
+		String hint = "Drag the HUD  •  Arrows for 1px  •  Esc to save  •  x=" + config.hudX + " y=" + config.hudY;
 		int hintW = this.font.width(hint);
 		graphics.text(this.font, hint, (this.width - hintW) / 2, 12, 0xFFFFFFFF, true);
 	}

@@ -33,7 +33,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
 /**
- * Menu unique : options, icônes vanilla, toggles animés, particules.
+ * Single settings menu: options, vanilla icons, animated toggles, particles.
  */
 public final class SettingsScreen extends Screen {
 	private static final int PANEL_W = 440;
@@ -184,7 +184,7 @@ public final class SettingsScreen extends Screen {
 		drawContent(graphics, mouseX, mouseY);
 
 		graphics.fill(px, py + PANEL_H - 22, px + PANEL_W, py + PANEL_H, 0xFF10140E);
-		String hint = "Échap · molette · /fprofit";
+		String hint = "Esc · scroll · /fprofit";
 		graphics.text(font, hint, px + SIDE + 10, py + PANEL_H - 16, 0xFF8A9680, false);
 		if (toastTicks > 0 && !toast.isEmpty()) {
 			graphics.text(font, toast, px + PANEL_W - 12 - font.width(toast), py + PANEL_H - 16, 0xFFFFF176, true);
@@ -238,7 +238,7 @@ public final class SettingsScreen extends Screen {
 
 		if (tab == 1 && PolarPresence.detected()) {
 			graphics.fill(x, drawY, x + w, drawY + 22, 0xAA5D2E18);
-			graphics.text(font, "Polar : hitbox crops et pack serveur sont off (crash natif).", x + 6, drawY + 7, 0xFFFFCC80, false);
+			graphics.text(font, "Polar: crop hitboxes and server pack are off (native crash).", x + 6, drawY + 7, 0xFFFFCC80, false);
 			drawY += 26;
 		}
 
@@ -275,12 +275,12 @@ public final class SettingsScreen extends Screen {
 					drawMini(graphics, bx + 56, drawY + 8, 16, "+", mouseX, mouseY);
 					Runnable minus = row.minus;
 					Runnable plus = row.plus;
-					hits.add(new Hit(bx, drawY + 8, 16, 16, minus, "Moins"));
-					hits.add(new Hit(bx + 56, drawY + 8, 16, 16, plus, "Plus"));
+					hits.add(new Hit(bx, drawY + 8, 16, 16, minus, "Less"));
+					hits.add(new Hit(bx + 56, drawY + 8, 16, 16, plus, "More"));
 				} else {
 					int bx = x + w - 78;
 					graphics.fill(bx, drawY + 8, bx + 72, drawY + 24, 0xFF4A3A14);
-					graphics.text(font, "Ouvrir", bx + 18, drawY + 12, 0xFFFFD54A, false);
+					graphics.text(font, "Open", bx + 18, drawY + 12, 0xFFFFD54A, false);
 					hits.add(new Hit(x, drawY, w, ROW_H - 2, row.action, row.desc));
 				}
 			}
@@ -291,8 +291,8 @@ public final class SettingsScreen extends Screen {
 		}
 
 		if (tab == 2) {
-			graphics.text(font, "Nom Pest", x, panelY + PANEL_H - 74, 0xFFB8C4A0, false);
-			graphics.text(font, "Nom Farm", x + (w / 2), panelY + PANEL_H - 74, 0xFFB8C4A0, false);
+			graphics.text(font, "Pest name", x, panelY + PANEL_H - 74, 0xFFB8C4A0, false);
+			graphics.text(font, "Farm name", x + (w / 2), panelY + PANEL_H - 74, 0xFFB8C4A0, false);
 		}
 		graphics.disableScissor();
 
@@ -322,52 +322,52 @@ public final class SettingsScreen extends Screen {
 		List<Row> rows = new ArrayList<>();
 		switch (tab) {
 			case 0 -> {
-				rows.add(toggle("HUD coins / heure", "Affiche le overlay quand une hoe de crop est en main", Items.GOLDEN_HOE,
+				rows.add(toggle("Coins / hour HUD", "Shows the overlay when a crop hoe is in hand", Items.GOLDEN_HOE,
 						() -> config.hudEnabled, () -> {
 							config.hudEnabled = !config.hudEnabled;
 							config.save();
-							ping(config.hudEnabled ? "HUD activé" : "HUD masqué");
+							ping(config.hudEnabled ? "HUD on" : "HUD hidden");
 						}));
-				rows.add(cycle("Mode Bazaar", "OFFER = sell offer Cofl · INSTANT = instant sell", Items.GOLD_INGOT,
+				rows.add(cycle("Bazaar mode", "OFFER = Cofl sell offer · INSTANT = instant sell", Items.GOLD_INGOT,
 						() -> config.useSellOffer() ? "OFFER" : "INSTANT", () -> {
 							config.priceMode = config.useSellOffer() ? "INSTANT" : "OFFER";
 							config.save();
-							ping("Prix : " + config.priceMode);
+							ping("Prices: " + config.priceMode);
 						}));
-				rows.add(toggle("Compter les seeds", "Ajoute le prix enchanted seeds au blé", Items.WHEAT_SEEDS,
+				rows.add(toggle("Count seeds", "Adds enchanted seed price to wheat", Items.WHEAT_SEEDS,
 						() -> config.includeSeeds, () -> {
 							config.includeSeeds = !config.includeSeeds;
 							config.save();
 						}));
-				rows.add(action("Déplacer le HUD", "Glisse l’overlay à la souris", Items.PAPER, this::openMove));
-				rows.add(action("Reset session", "Remet compteur, temps et profit à zéro", Items.CLOCK, () -> {
+				rows.add(action("Move HUD", "Drag the overlay with the mouse", Items.PAPER, this::openMove));
+				rows.add(action("Reset session", "Clears counter, time and profit", Items.CLOCK, () -> {
 					tracker.resetSession();
 					ping("Session reset");
 				}));
-				rows.add(action("Rafraîchir Cofl", "Relance l’API bazaar", Items.ENDER_CHEST, () -> {
+				rows.add(action("Refresh Cofl", "Reload bazaar API", Items.ENDER_CHEST, () -> {
 					prices.refreshNow();
-					ping("Prix Cofl…");
+					ping("Cofl prices…");
 				}));
 			}
 			case 1 -> {
-				rows.add(toggle("Hitbox crops", "1 bloc si mature, plus basse sinon (cacao inclus)", Items.WHEAT,
+				rows.add(toggle("Crop hitboxes", "1 block when mature, lowest otherwise (cocoa included)", Items.WHEAT,
 						() -> config.fullCropHitboxes, () -> {
 							config.fullCropHitboxes = !config.fullCropHitboxes;
 							config.save();
-							ping(config.fullCropHitboxes ? "Hitbox custom" : "Hitbox vanilla");
+							ping(config.fullCropHitboxes ? "Custom hitboxes" : "Vanilla hitboxes");
 						}));
-				rows.add(stepper("Timeout AFK", "Pause le timer HUD après inactivité", Items.CLOCK,
+				rows.add(stepper("AFK timeout", "Pauses the HUD timer after inactivity", Items.CLOCK,
 						() -> config.afkTimeoutSeconds + "s",
 						() -> stepAfk(-5),
 						() -> stepAfk(5)));
 			}
 			case 2 -> {
-				rows.add(toggle("Canne → loadout", "Clic droit canne : Pest / Farm", Items.FISHING_ROD,
+				rows.add(toggle("Rod → loadout", "Right-click rod: Pest / Farm", Items.FISHING_ROD,
 						() -> config.pestRodLoadout, () -> {
 							config.pestRodLoadout = !config.pestRodLoadout;
 							config.save();
 						}));
-				rows.add(toggle("Auto Pest / Farm", "Pest à 2m50, /setspawn, Farm 0.5–1s après spawn", Items.CARROT,
+				rows.add(toggle("Auto Pest / Farm", "Pest at 2m50, /setspawn, Farm 0.5–1s after spawn", Items.CARROT,
 						() -> config.autoPestLoadout, () -> {
 							config.autoPestLoadout = !config.autoPestLoadout;
 							if (!config.autoPestLoadout) {
@@ -375,18 +375,18 @@ public final class SettingsScreen extends Screen {
 							}
 							config.save();
 						}));
-				rows.add(toggle("Alerte 2m50", "Gros titre + compte à rebours 5s", Items.NETHER_WART,
+				rows.add(toggle("2m50 alert", "Large title + 5s countdown", Items.NETHER_WART,
 						() -> config.pestCooldownAlert, () -> {
 							config.pestCooldownAlert = !config.pestCooldownAlert;
 							config.save();
 						}));
-				rows.add(action("Switch Pest / Farm", "Ouvre /loadout et clique le loadout inverse", Items.FISHING_ROD, () -> {
+				rows.add(action("Switch Pest / Farm", "Opens /loadout and clicks the other loadout", Items.FISHING_ROD, () -> {
 					this.onClose();
 					pest.startFromCommand();
 				}));
 			}
 			case 3 -> {
-				rows.add(toggle("Auto ability pioche", "Clic droit quand le cooldown mining arrive à 0", Items.IRON_PICKAXE,
+				rows.add(toggle("Auto pickaxe ability", "Right-click when mining cooldown hits 0", Items.IRON_PICKAXE,
 						() -> config.autoPickaxeAbility, () -> {
 							config.autoPickaxeAbility = !config.autoPickaxeAbility;
 							if (!config.autoPickaxeAbility) {
@@ -396,27 +396,27 @@ public final class SettingsScreen extends Screen {
 						}));
 			}
 			case 4 -> {
-				rows.add(toggle("Pack serveur en dernier", "Vanilla + tes packs passent devant Hypixel", Items.CHEST,
+				rows.add(toggle("Server pack last", "Vanilla + your packs override Hypixel", Items.CHEST,
 						() -> config.hideServerResourcePack, this::togglePack));
-				rows.add(toggle("Màj GitHub", "Vérifie la Latest 26.1.2 au login", Items.COMPASS,
+				rows.add(toggle("GitHub updates", "Check Latest 26.1.2 on login", Items.COMPASS,
 						() -> config.checkUpdates, () -> {
 							config.checkUpdates = !config.checkUpdates;
 							config.save();
 						}));
-				rows.add(toggle("Ping d’usage", "Envoie UUID / pseudo / version (table privée)", Items.PAPER,
+				rows.add(toggle("Usage ping", "Sends UUID / username / version (private table)", Items.PAPER,
 						() -> config.usagePing, () -> {
 							config.usagePing = !config.usagePing;
 							config.save();
 						}));
-				rows.add(action("Vérifier GitHub", "Compare avec la dernière release", Items.COMPASS, () -> {
+				rows.add(action("Check GitHub", "Compare with the latest release", Items.COMPASS, () -> {
 					updates.refreshNow();
-					ping("Vérif GitHub…");
+					ping("GitHub check…");
 				}));
-				rows.add(action("Installer la màj", "Télécharge le JAR 26.1.2 et ferme le jeu", Items.NETHER_STAR, () -> {
+				rows.add(action("Install update", "Download the 26.1.2 JAR and close the game", Items.NETHER_STAR, () -> {
 					updates.installNow();
-					ping("Installation…");
+					ping("Installing…");
 				}));
-				rows.add(action("Vente NPC", "En jeu : /fprofit sell <item> [fois]", Items.EMERALD, () -> {
+				rows.add(action("NPC sell", "In-game: /fprofit sell <item> [times]", Items.EMERALD, () -> {
 					ping("/fprofit sell <item>");
 				}));
 			}
@@ -431,9 +431,9 @@ public final class SettingsScreen extends Screen {
 		config.save();
 		if (config.hideServerResourcePack && this.minecraft != null) {
 			this.minecraft.reloadResourcePacks();
-			ping("Pack Hypixel en dernier");
+			ping("Hypixel pack last");
 		} else {
-			ping("Priorité pack normale — reconnecte");
+			ping("Normal pack priority — reconnect");
 		}
 	}
 
@@ -566,11 +566,11 @@ public final class SettingsScreen extends Screen {
 	}
 
 	private enum Tab {
-		HUD("HUD", "Overlay coins / heure", Items.GOLDEN_HOE),
-		GARDEN("Farm", "Hitbox et AFK", Items.WHEAT),
-		PEST("Pest", "Loadout et alerte 2m50", Items.FISHING_ROD),
-		MINING("Mine", "Ability pioche", Items.IRON_PICKAXE),
-		SYSTEM("Sys", "Pack, updates, vente NPC", Items.NETHER_STAR);
+		HUD("HUD", "Coins / hour overlay", Items.GOLDEN_HOE),
+		GARDEN("Farm", "Hitbox and AFK", Items.WHEAT),
+		PEST("Pest", "Loadout and 2m50 alert", Items.FISHING_ROD),
+		MINING("Mine", "Pickaxe ability", Items.IRON_PICKAXE),
+		SYSTEM("Sys", "Pack, updates, NPC sell", Items.NETHER_STAR);
 
 		final String label;
 		final String hint;

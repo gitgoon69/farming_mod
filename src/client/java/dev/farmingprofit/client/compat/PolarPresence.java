@@ -12,8 +12,8 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
 
 /**
- * Polar accroche des méthodes vanilla en natif. Nos mixins réseau / GUI / packs
- * déplacent ces méthodes et provoquent un ACCESS_VIOLATION dans ntdll.
+ * Polar hooks vanilla methods natively. Our network / GUI / pack mixins
+ * shift those methods and cause an ACCESS_VIOLATION in ntdll.
  */
 public final class PolarPresence {
 	private static final Logger LOGGER = LoggerFactory.getLogger("farmingprofit");
@@ -21,7 +21,7 @@ public final class PolarPresence {
 
 	static {
 		if (PRESENT) {
-			LOGGER.warn("Polar détecté : tous les mixins Farming Profit sont désactivés (évite le crash ntdll).");
+			LOGGER.warn("Polar detected: all Farming Profit mixins are disabled (avoids the ntdll crash).");
 		}
 	}
 

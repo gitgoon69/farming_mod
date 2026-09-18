@@ -1,48 +1,48 @@
 # Farming Profit
 
-Mod Fabric **client-only** pour Hypixel SkyBlock Garden.
+Client-only Fabric mod for Hypixel SkyBlock Garden.
 
-## Téléchargement
+## Download
 
-Releases : https://github.com/matteorlt/farming_mod/releases
+Releases: https://github.com/matteorlt/farming_mod/releases
 
-| Minecraft | Fichier GitHub |
+| Minecraft | GitHub file |
 | --- | --- |
-| **26.1.2** (la plupart des joueurs) | Release **Latest** → `farmingprofit-x.y.z.jar` |
-| **26.2** | Release **« Minecraft 26.2 »** → `farmingprofit-x.y.z-minecraft-26.2.jar` |
+| **26.1.2** (most players) | **Latest** release → `farmingprofit-x.y.z.jar` |
+| **26.2** | **“Minecraft 26.2”** release → `farmingprofit-x.y.z-minecraft-26.2.jar` |
 
-Installe **un seul** JAR dans `.minecraft/mods/`, avec Fabric Loader + Fabric API de **la même** version Minecraft. Ne prends pas le JAR 26.2 si tu es en 26.1.2.
+Install **one** JAR in `.minecraft/mods/`, with Fabric Loader + Fabric API for **the same** Minecraft version. Do not use the 26.2 JAR on 26.1.2.
 
-L’install auto en jeu ne télécharge **jamais** le JAR 26.2.
+In-game auto-install **never** downloads the 26.2 JAR.
 
-## Fonctionnalités
+## Features
 
-- HUD coins/heure (prix Bazaar Cofl)
-- Menu in-game (`/fprofit` ou `/fprofit menu`) : toutes les options, icônes vanilla
-- Hitbox crops mature = 1 bloc
-- Visitor's Logbook : unique served
-- Loadout Pest / Farm via canne à pêche
-- Alerte cooldown pest (tab, à 2m50, compte à rebours 5s)
-- Auto loadout Pest à 2m50, Farm 0.5–1s après spawn
-- Vente NPC (`/fprofit sell`)
+- Coins/hour HUD (Cofl Bazaar prices)
+- In-game menu (`/fprofit` or `/fprofit menu`): every option, vanilla item icons
+- Mature crop hitboxes = 1 block
+- Visitor's Logbook: unique served
+- Pest / Farm loadout via fishing rod
+- Pest cooldown alert (tab list, at 2m50, 5s countdown)
+- Auto Pest loadout at 2m50, Farm 0.5–1s after spawn
+- NPC sell (`/fprofit sell`)
 
-## Commandes
+## Commands
 
-Voir [`COMMANDS.md`](COMMANDS.md). Toutes commencent par `/fprofit`.
+See [`COMMANDS.md`](COMMANDS.md). All commands start with `/fprofit`.
 
 ## Build
 
-Java 25 requis.
+Java 25 required.
 
 ```
 ./gradlew.bat build
 ./gradlew.bat build "-Pmc=26.2"
 ```
 
-JAR : `build/libs/farmingprofit-1.0.15.jar` (26.1.2) et `farmingprofit-1.0.15-minecraft-26.2.jar` (26.2)
+JAR: `build/libs/farmingprofit-1.0.16.jar` (26.1.2) and `farmingprofit-1.0.16-minecraft-26.2.jar` (26.2)
 
-## Mise à jour
+## Updates
 
-En **26.1.2**, au login, le mod compare sa version à la release GitHub **Latest** et propose **[Installer]** (JAR 26.1.2 uniquement).
+On **26.1.2**, at login, the mod compares its version to the GitHub **Latest** release and offers **[Install]** (26.1.2 JAR only).
 
-En **26.2**, pas d’install auto : le chat pointe vers la release GitHub « Minecraft 26.2 ».
+On **26.2**, there is no auto-install: chat points to the GitHub “Minecraft 26.2” release.

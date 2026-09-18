@@ -12,7 +12,7 @@ import net.minecraft.world.scores.ScoreHolder;
 import net.minecraft.world.scores.Scoreboard;
 
 /**
- * Détecte Hypixel SkyBlock / Garden via le scoreboard, comme Skyblocker {@code Utils}.
+ * Detects Hypixel SkyBlock / Garden from the scoreboard, like Skyblocker {@code Utils}.
  */
 public final class GardenDetector {
 	private static boolean onHypixel;

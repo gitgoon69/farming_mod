@@ -14,7 +14,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.scores.PlayerTeam;
 
 /**
- * Lignes du tab Hypixel (widgets = prefix/suffix d’équipes, faux joueurs unlistés).
+ * Hypixel tab lines (widgets = team prefix/suffix, unlisted fake players).
  */
 public final class TabList {
 	private TabList() {

@@ -58,15 +58,15 @@ jobs:
           fail_on_unmatched_files: true
           generate_release_notes: true
           body: |
-            ## Téléchargement
+            ## Download
 
-            **Minecraft 26.1.2 → ce fichier** (`farmingprofit-${{ steps.ver.outputs.ver }}.jar`)
+            **Minecraft 26.1.2 → this file** (`farmingprofit-${{ steps.ver.outputs.ver }}.jar`)
 
-            Un seul JAR dans `.minecraft/mods/`, avec Fabric Loader + Fabric API **26.1.2**.
+            One JAR in `.minecraft/mods/`, with Fabric Loader + Fabric API **26.1.2**.
 
-            Tu joues en **Minecraft 26.2** ? Ouvre la release **« Minecraft 26.2 »** (pas celle-ci, pas Latest) :
+            Playing **Minecraft 26.2**? Open the **“Minecraft 26.2”** release (not this one, not Latest):
             https://github.com/matteorlt/farming_mod/releases/tag/${{ github.ref_name }}-26.2
-      - name: Release Minecraft 26.2 (pas Latest)
+      - name: Release Minecraft 26.2 (not Latest)
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}-26.2
@@ -77,15 +77,15 @@ jobs:
           files: dist/farmingprofit-26.2/*.jar
           fail_on_unmatched_files: true
           body: |
-            ## Minecraft 26.2 seulement
+            ## Minecraft 26.2 only
 
-            Fichier : `farmingprofit-${{ steps.ver.outputs.ver }}-minecraft-26.2.jar`
+            File: `farmingprofit-${{ steps.ver.outputs.ver }}-minecraft-26.2.jar`
 
-            **N’installe pas ce JAR en 26.1.2.** La version 26.1.2 est ici (Latest) :
+            **Do not install this JAR on 26.1.2.** The 26.1.2 build is here (Latest):
             https://github.com/matteorlt/farming_mod/releases/latest
 
-            Un seul JAR dans `.minecraft/mods/`, avec Fabric Loader + Fabric API **26.2**.
-      - name: Garder 26.1.2 en Latest
+            One JAR in `.minecraft/mods/`, with Fabric Loader + Fabric API **26.2**.
+      - name: Keep 26.1.2 as Latest
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh release edit "${{ github.ref_name }}" --latest

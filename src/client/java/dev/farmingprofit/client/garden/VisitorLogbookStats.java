@@ -23,9 +23,9 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ItemLore;
 
 /**
- * Overlay du Visitor's Logbook : unique served = visiteurs avec Offers Accepted &gt; 0.
- * Même source que SkyHanni {@code LogBookStats} (lore du GUI), équivalent API
- * {@code garden.commission_data.unique_npcs_served} sans clé Hypixel.
+ * Visitor's Logbook overlay: unique served = visitors with Offers Accepted &gt; 0.
+ * Same source as SkyHanni {@code LogBookStats} (GUI lore), equivalent to API
+ * {@code garden.commission_data.unique_npcs_served} without a Hypixel key.
  */
 public final class VisitorLogbookStats {
 	private static final Pattern PAGE_TITLE = Pattern.compile("\\((\\d+)/(\\d+)\\)");
@@ -87,13 +87,13 @@ public final class VisitorLogbookStats {
 				? new String[] {
 						"Visitor's Logbook",
 						"Unique served: " + unique,
-						"Offres acceptées: " + format(offers)
+						"Offers accepted: " + format(offers)
 				}
 				: new String[] {
 						"Visitor's Logbook",
 						"Unique served: " + unique,
-						"Offres acceptées: " + format(offers),
-						"Ouvre toutes les pages"
+						"Offers accepted: " + format(offers),
+						"Open every page"
 				};
 
 		int x = leftPos + imageWidth + 8;

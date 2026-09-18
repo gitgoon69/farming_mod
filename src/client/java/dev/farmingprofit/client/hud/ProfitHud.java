@@ -94,7 +94,7 @@ public final class ProfitHud {
 		lines.add("Farming Profit");
 
 		if (snap.crop() == null) {
-			lines.add("Tiens une hoe de crop");
+			lines.add("Hold a crop hoe");
 			return lines;
 		}
 
@@ -102,23 +102,23 @@ public final class ProfitHud {
 		lines.add(crop.displayName + (snap.paused() ? "  (AFK)" : ""));
 
 		if (snap.counter() >= 0) {
-			lines.add("Compteur: " + formatCount(snap.counter()));
+			lines.add("Counter: " + formatCount(snap.counter()));
 		} else {
-			lines.add("Cultivating requis");
+			lines.add("Cultivating required");
 		}
 
 		lines.add("Crops/min: " + formatCount(Math.round(snap.adjustedCropsPerMinute())));
-		lines.add("Blocs/s: " + String.format(Locale.US, "%.1f", snap.blocksPerSecond()));
+		lines.add("Blocks/s: " + String.format(Locale.US, "%.1f", snap.blocksPerSecond()));
 
 		if (!snap.pricesReady()) {
-			lines.add("Prix Cofl: chargement...");
+			lines.add("Cofl prices: loading...");
 			if (snap.priceError() != null) {
 				lines.add(snap.priceError());
 			}
 		} else if (snap.unitPrice() <= 0) {
-			lines.add("Prix indisponible");
+			lines.add("Prices unavailable");
 		} else {
-			String mode = snap.sellOffer() ? "offre" : "instant";
+			String mode = snap.sellOffer() ? "offer" : "instant";
 			lines.add("Coins/h: " + formatCoins(snap.coinsPerHour()) + "  (" + mode + ")");
 			lines.add("Session: " + formatCoins(snap.sessionProfit())
 					+ "  |  " + formatDuration(snap.activeMs()));

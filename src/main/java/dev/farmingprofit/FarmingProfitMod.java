@@ -11,7 +11,7 @@ public class FarmingProfitMod implements ModInitializer {
 
 	@Override
 	public void onInitialize() {
-		LOGGER.info("Farming Profit chargé.");
+		LOGGER.info("Farming Profit loaded.");
 	}
 
 	public static Identifier id(String path) {

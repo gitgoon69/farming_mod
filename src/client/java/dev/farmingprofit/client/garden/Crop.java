@@ -9,9 +9,9 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 
 /**
- * Mapping culture SkyBlock → outil → item bazaar enchanted.
- * Inspiré de SkyHanni {@code CropType} et Skyblocker {@code FarmingHudWidget.FARMING_TOOLS}.
- * 1 enchanted = 160 items normaux, d'où prix/crop = prix enchanted / 160.
+ * SkyBlock crop → tool → enchanted bazaar item mapping.
+ * Inspired by SkyHanni {@code CropType} and Skyblocker {@code FarmingHudWidget.FARMING_TOOLS}.
+ * 1 enchanted = 160 normal items, so price/crop = enchanted price / 160.
  */
 public enum Crop {
 	WHEAT("Wheat", "WHEAT", "ENCHANTED_WHEAT", false),
@@ -173,7 +173,7 @@ public enum Crop {
 	}
 
 	/**
-	 * Sunflower hoe: jour = sunflower, nuit = moonflower (comme Skyblocker).
+	 * Sunflower hoe: day = sunflower, night = moonflower (like Skyblocker).
 	 */
 	public static Crop resolveTimeFlower(Crop crop, long dayTime) {
 		if (crop != SUNFLOWER && crop != MOONFLOWER) {

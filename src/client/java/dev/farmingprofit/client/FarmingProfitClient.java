@@ -172,27 +172,27 @@ public class FarmingProfitClient implements ClientModInitializer {
 						.then(literal("toggle").executes(ctx -> {
 							config.hudEnabled = !config.hudEnabled;
 							config.save();
-							feedback(ctx, config.hudEnabled ? "HUD activé." : "HUD désactivé.");
+							feedback(ctx, config.hudEnabled ? "HUD enabled." : "HUD disabled.");
 							return 1;
 						}))
 						.then(literal("hitbox").executes(ctx -> {
 							config.fullCropHitboxes = !config.fullCropHitboxes;
 							config.save();
 							feedback(ctx, config.fullCropHitboxes
-									? "Hitbox crops : 1 bloc si mature, plus basse sinon (cacao inclus)."
-									: "Hitbox crops vanilla.");
+									? "Crop hitboxes: 1 block when mature, lowest otherwise (cocoa included)."
+									: "Vanilla crop hitboxes.");
 							return 1;
 						}))
 						.then(literal("pest").executes(ctx -> {
 							if (pestLoadout.running()) {
 								pestLoadout.cancel();
-								feedback(ctx, "Changement de loadout annulé.");
+								feedback(ctx, "Loadout switch cancelled.");
 								return 1;
 							}
 							if (pestLoadout.pestMode()) {
-								feedback(ctx, "Ouverture /loadout → " + config.farmLoadoutName + "...");
+								feedback(ctx, "Opening /loadout → " + config.farmLoadoutName + "...");
 							} else {
-								feedback(ctx, "Ouverture /loadout → " + config.pestLoadoutName + "...");
+								feedback(ctx, "Opening /loadout → " + config.pestLoadoutName + "...");
 							}
 							pestLoadout.startFromCommand();
 							return 1;
@@ -201,8 +201,8 @@ public class FarmingProfitClient implements ClientModInitializer {
 							config.pestCooldownAlert = !config.pestCooldownAlert;
 							config.save();
 							feedback(ctx, config.pestCooldownAlert
-									? "Alerte cooldown pest : ON (à 2m50, compte à rebours 5s)."
-									: "Alerte cooldown pest : OFF.");
+									? "Pest cooldown alert: ON (at 2m50, 5s countdown)."
+									: "Pest cooldown alert: OFF.");
 							return 1;
 						}))
 						.then(literal("pestauto").executes(ctx -> {
@@ -212,8 +212,8 @@ public class FarmingProfitClient implements ClientModInitializer {
 								pestLoadout.cancelPendingAuto();
 							}
 							feedback(ctx, config.autoPestLoadout
-									? "Auto loadout : ON (Pest à 2m50, /setspawn au spawn, Farm 0.5–1s après)."
-									: "Auto loadout : OFF.");
+									? "Auto loadout: ON (Pest at 2m50, /setspawn on spawn, Farm 0.5–1s later)."
+									: "Auto loadout: OFF.");
 							return 1;
 						}))
 						.then(literal("serverpack").executes(ctx -> {
@@ -222,9 +222,9 @@ public class FarmingProfitClient implements ClientModInitializer {
 							Minecraft client = ctx.getSource().getClient();
 							if (config.hideServerResourcePack) {
 								client.reloadResourcePacks();
-								feedback(ctx, "Pack serveur Hypixel : tout en dernier (vanilla et tes packs passent devant).");
+								feedback(ctx, "Hypixel server pack: last (vanilla and your packs take priority).");
 							} else {
-								feedback(ctx, "Pack serveur Hypixel : priorité normale. Reconnecte pour le remettre en haut.");
+								feedback(ctx, "Hypixel server pack: normal priority. Reconnect to put it back on top.");
 							}
 							return 1;
 						}))
@@ -235,23 +235,23 @@ public class FarmingProfitClient implements ClientModInitializer {
 								pickaxeAbility.reset();
 							}
 							feedback(ctx, config.autoPickaxeAbility
-									? "Auto ability pioche : ON (clic droit quand le cooldown arrive à 0)."
-									: "Auto ability pioche : OFF.");
+									? "Auto pickaxe ability: ON (right-click when cooldown hits 0)."
+									: "Auto pickaxe ability: OFF.");
 							return 1;
 						}))
 						.then(literal("update")
 								.executes(ctx -> {
 									if (!config.checkUpdates) {
-										feedback(ctx, "Vérif updates désactivée (checkUpdates dans farmingprofit.json).");
+										feedback(ctx, "Update check disabled (checkUpdates in farmingprofit.json).");
 										return 0;
 									}
 									updates.refreshNow();
-									feedback(ctx, "Vérification GitHub…");
+									feedback(ctx, "Checking GitHub…");
 									return 1;
 								})
 								.then(literal("install").executes(ctx -> {
 									if (!config.checkUpdates) {
-										feedback(ctx, "Vérif updates désactivée (checkUpdates dans farmingprofit.json).");
+										feedback(ctx, "Update check disabled (checkUpdates in farmingprofit.json).");
 										return 0;
 									}
 									updates.installNow();
@@ -259,19 +259,19 @@ public class FarmingProfitClient implements ClientModInitializer {
 								})))
 						.then(literal("prices").executes(ctx -> {
 							prices.refreshNow();
-							feedback(ctx, "Rafraîchissement des prix Cofl...");
+							feedback(ctx, "Refreshing Cofl prices...");
 							return 1;
 						}))
 						.then(literal("mode")
 								.then(argument("type", StringArgumentType.word()).executes(ctx -> {
 									String type = StringArgumentType.getString(ctx, "type").toUpperCase();
 									if (!type.equals("OFFER") && !type.equals("INSTANT")) {
-										feedback(ctx, "Utilise OFFER (sell offer) ou INSTANT (instant sell).");
+										feedback(ctx, "Use OFFER (sell offer) or INSTANT (instant sell).");
 										return 0;
 									}
 									config.priceMode = type;
 									config.save();
-									feedback(ctx, "Mode prix: " + type);
+									feedback(ctx, "Price mode: " + type);
 									return 1;
 								})))
 						.then(literal("move")
@@ -280,7 +280,7 @@ public class FarmingProfitClient implements ClientModInitializer {
 									config.hudX = 8;
 									config.hudY = 48;
 									config.save();
-									feedback(ctx, "HUD remis à x=8 y=48.");
+									feedback(ctx, "HUD reset to x=8 y=48.");
 									return 1;
 								}))
 								.then(argument("x", IntegerArgumentType.integer(0, 4000))
@@ -288,7 +288,7 @@ public class FarmingProfitClient implements ClientModInitializer {
 											config.hudX = IntegerArgumentType.getInteger(ctx, "x");
 											config.hudY = IntegerArgumentType.getInteger(ctx, "y");
 											config.save();
-											feedback(ctx, "HUD déplacé à x=" + config.hudX + " y=" + config.hudY + ".");
+											feedback(ctx, "HUD moved to x=" + config.hudX + " y=" + config.hudY + ".");
 											return 1;
 										}))))
 						.then(literal("sell")
@@ -303,12 +303,12 @@ public class FarmingProfitClient implements ClientModInitializer {
 						.then(literal("help").executes(FarmingProfitClient::help))
 		));
 
-		FarmingProfitMod.LOGGER.info("Farming Profit client prêt. Commande: /fprofit");
+		FarmingProfitMod.LOGGER.info("Farming Profit client ready. Command: /fprofit");
 	}
 
 	private static int openSettings(CommandContext<FabricClientCommandSource> ctx) {
 		openMenu(ctx.getSource().getClient());
-		feedback(ctx, "Menu Farming Profit.");
+		feedback(ctx, "Farming Profit menu.");
 		return 1;
 	}
 
@@ -320,12 +320,12 @@ public class FarmingProfitClient implements ClientModInitializer {
 	private static int openMoveScreen(CommandContext<FabricClientCommandSource> ctx) {
 		Minecraft client = ctx.getSource().getClient();
 		client.execute(() -> ClientScreens.set(client, new HudMoveScreen(config, tracker, prices)));
-		feedback(ctx, "Glisse le HUD, puis Échap ou Terminé.");
+		feedback(ctx, "Drag the HUD, then Esc or Done.");
 		return 1;
 	}
 
 	private static int help(CommandContext<FabricClientCommandSource> ctx) {
-		ctx.getSource().sendFeedback(Component.literal("Farming Profit — /fprofit (menu) | menu | sell <item> [fois] | pest | pestauto | pestalert | pickaxe | serverpack | update [install] | sell cancel | move [x y|reset] | reset | toggle | hitbox | prices | mode <OFFER|INSTANT>").withStyle(ChatFormatting.GOLD));
+		ctx.getSource().sendFeedback(Component.literal("Farming Profit — /fprofit (menu) | menu | sell <item> [times] | pest | pestauto | pestalert | pickaxe | serverpack | update [install] | sell cancel | move [x y|reset] | reset | toggle | hitbox | prices | mode <OFFER|INSTANT>").withStyle(ChatFormatting.GOLD));
 		return 1;
 	}
 

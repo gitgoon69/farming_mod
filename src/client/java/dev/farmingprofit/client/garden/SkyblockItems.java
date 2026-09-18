@@ -7,7 +7,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
 
 /**
- * Lit ExtraAttributes Hypixel (id, cultivating, replenish) comme Skyblocker {@code ItemUtils}/{@code FarmingHud}.
+ * Reads Hypixel ExtraAttributes (id, cultivating, replenish) like Skyblocker {@code ItemUtils}/{@code FarmingHud}.
  */
 public final class SkyblockItems {
 	public static final String ID_KEY = "id";

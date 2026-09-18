@@ -22,8 +22,8 @@ import net.minecraft.world.item.component.ItemLore;
 import net.minecraft.world.phys.HitResult;
 
 /**
- * Auto ability pioche SkyBlock : quand le cooldown (overlay / chat) arrive à 0,
- * un clic droit est envoyé si une pioche de mining est en main.
+ * SkyBlock pickaxe auto ability: when cooldown (overlay / chat) hits 0,
+ * a right-click is sent if a mining pickaxe is in hand.
  */
 public final class PickaxeAbilityService {
 	private static final Pattern ABILITY_USED = Pattern.compile(

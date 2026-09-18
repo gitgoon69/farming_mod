@@ -18,9 +18,9 @@ import dev.farmingprofit.FarmingProfitMod;
 import net.fabricmc.loader.api.FabricLoader;
 
 /**
- * Télécharge le JAR dans {@code mods/} puis lance un process détaché
- * (comme libautoupdate / ModUpdater) pour swapper après la fermeture,
- * parce que Windows verrouille le JAR chargé.
+ * Downloads the JAR into {@code mods/} then starts a detached process
+ * (like libautoupdate / ModUpdater) to swap after shutdown,
+ * because Windows locks the loaded JAR.
  */
 public final class UpdateInstaller {
 	private static final String PENDING_NAME = "farmingprofit-update.tmp";
@@ -47,7 +47,7 @@ public final class UpdateInstaller {
 				return path;
 			}
 		} catch (Exception e) {
-			FarmingProfitMod.LOGGER.warn("JAR courant introuvable: {}", e.toString());
+			FarmingProfitMod.LOGGER.warn("Current JAR not found: {}", e.toString());
 		}
 		return null;
 	}
@@ -82,11 +82,11 @@ public final class UpdateInstaller {
 		HttpResponse<Path> response = http.send(request, HttpResponse.BodyHandlers.ofFile(destination));
 		if (response.statusCode() / 100 != 2) {
 			Files.deleteIfExists(destination);
-			throw new IOException("Téléchargement HTTP " + response.statusCode());
+			throw new IOException("HTTP download " + response.statusCode());
 		}
 		if (Files.size(destination) < 1024) {
 			Files.deleteIfExists(destination);
-			throw new IOException("Fichier trop petit, téléchargement invalide.");
+			throw new IOException("File too small, invalid download.");
 		}
 	}
 

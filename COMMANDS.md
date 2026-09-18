@@ -1,47 +1,47 @@
-# Farming Profit — Commandes
+# Farming Profit — Commands
 
-Toutes les commandes commencent par **`/fprofit`**.
+Every command starts with **`/fprofit`**.
 
-## Menu in-game (26.1.2)
+## In-game menu (26.1.2)
 
-Toutes les options (HUD, hitbox, pest, pioche, pack, updates) sont dans un écran unique, icônes vanilla.
+Every option (HUD, hitbox, pest, pickaxe, pack, updates) lives in one screen, with vanilla icons.
 
-| Commande | Description |
+| Command | Description |
 | --- | --- |
-| `/fprofit` | Ouvre le menu |
-| `/fprofit menu` | Ouvre le menu |
-| Touche `Ouvrir le menu Farming Profit` | Raccourci (non assigné par défaut, Contrôles) |
+| `/fprofit` | Opens the menu |
+| `/fprofit menu` | Opens the menu |
+| Keybind `Open Farming Profit menu` | Shortcut (unbound by default, Controls) |
 
-## Aide
+## Help
 
-| Commande | Description |
+| Command | Description |
 | --- | --- |
-| `/fprofit help` | Affiche l’aide chat |
+| `/fprofit help` | Prints chat help |
 
-## HUD (coins / heure)
+## HUD (coins / hour)
 
-Le HUD s’affiche dès qu’un **outil de farm** est en main. La crop vient du bloc cassé, sinon de l’outil.
+The HUD shows when a **farming tool** is in hand. The crop comes from the broken block, otherwise from the tool.
 
-| Commande | Description |
+| Command | Description |
 | --- | --- |
-| `/fprofit toggle` | Active ou désactive le HUD |
-| `/fprofit hitbox` | Hitbox 1 bloc si mature, plus basse sinon (cacao inclus) |
-| `/fprofit reset` | Reset la session de farm (compteur, temps, profit) |
-| `/fprofit prices` | Rafraîchit les prix Bazaar Cofl |
-| `/fprofit update` | Vérifie s’il y a une nouvelle version GitHub |
-| `/fprofit update install` | Télécharge le JAR, ferme Minecraft, relance le jeu |
-| `/fprofit mode OFFER` | Prix **sell offer** (défaut, `buyPrice` Cofl / 160) |
-| `/fprofit mode INSTANT` | Prix **instant sell** (`sellPrice` Cofl / 160) |
+| `/fprofit toggle` | Enable or disable the HUD |
+| `/fprofit hitbox` | 1-block hitbox when mature, lowest otherwise (cocoa included) |
+| `/fprofit reset` | Reset the farm session (counter, time, profit) |
+| `/fprofit prices` | Refresh Cofl Bazaar prices |
+| `/fprofit update` | Check GitHub for a new version |
+| `/fprofit update install` | Download the JAR, close Minecraft, relaunch |
+| `/fprofit mode OFFER` | **Sell offer** prices (default, Cofl `buyPrice` / 160) |
+| `/fprofit mode INSTANT` | **Instant sell** prices (Cofl `sellPrice` / 160) |
 
-## Position du HUD
+## HUD position
 
-| Commande | Description |
+| Command | Description |
 | --- | --- |
-| `/fprofit move` | Ouvre l’éditeur : glisser le HUD, flèches (Shift = 10 px), Échap / Terminé |
-| `/fprofit move <x> <y>` | Place le HUD aux coordonnées données |
-| `/fprofit move reset` | Remet le HUD à `x=8` `y=48` |
+| `/fprofit move` | Open the editor: drag the HUD, arrows (Shift = 10 px), Esc / Done |
+| `/fprofit move <x> <y>` | Place the HUD at the given coordinates |
+| `/fprofit move reset` | Reset the HUD to `x=8` `y=48` |
 
-Exemples :
+Examples:
 
 ```
 /fprofit move
@@ -51,87 +51,87 @@ Exemples :
 
 ## Visitor's Logbook
 
-Dans **Visitor's Logbook**, un overlay à droite du menu affiche le total **Unique served** (visiteurs avec au moins 1 offre acceptée) et le total d’offres acceptées. Parcours toutes les pages pour le chiffre complet.
+In **Visitor's Logbook**, an overlay on the right shows **Unique served** (visitors with at least 1 accepted offer) and total accepted offers. Open every page for the full count.
 
-## Hitbox des crops
+## Crop hitboxes
 
-La hitbox de **visée / clic** (pas la collision) :
+**Aim / click** hitbox only (not collision):
 
-- **Mature** : cube 1×1×1 (blé, carottes, pommes de terre, nether wart, cacao, champignons)
-- **Pas encore poussé** : hitbox la plus basse (stade 0), pour ne pas casser les plants jeunes
+- **Mature**: 1×1×1 cube (wheat, carrots, potatoes, nether wart, cocoa, mushrooms)
+- **Not grown yet**: lowest hitbox (stage 0), so young plants are not broken
 
-| Commande | Description |
+| Command | Description |
 | --- | --- |
-| `/fprofit hitbox` | Active ou désactive (défaut : activé) |
+| `/fprofit hitbox` | Enable or disable (default: on) |
 
-## Loadout Pest (canne à pêche)
+## Pest loadout (fishing rod)
 
-Clic droit avec une **canne à pêche** :
+Right-click with a **fishing rod**:
 
-- pas en Mode Pest → `/loadout` puis left-click sur **Pest** (bandeau arc-en-ciel)
-- déjà en Mode Pest → `/loadout` puis left-click sur **Farm** (le bandeau disparaît)
+- not in Pest Mode → `/loadout` then left-click **Pest** (rainbow banner)
+- already in Pest Mode → `/loadout` then left-click **Farm** (banner disappears)
 
-| Commande | Description |
+| Command | Description |
 | --- | --- |
-| `/fprofit pest` | Toggle Pest / Farm (comme la canne) |
-| `/fprofit pestalert` | Active ou désactive l’alerte cooldown pest (tab) |
-| `/fprofit pestauto` | Auto loadout Pest à 2m50, /setspawn au spawn, Farm 0.5–1s après |
-| `/fprofit pickaxe` | Auto ability pioche (clic droit quand le cooldown est à 0) |
-| `/fprofit serverpack` | Pack serveur Hypixel en priorité basse (défaut : ON) |
+| `/fprofit pest` | Toggle Pest / Farm (same as the rod) |
+| `/fprofit pestalert` | Enable or disable the pest cooldown alert (tab) |
+| `/fprofit pestauto` | Auto Pest loadout at 2m50, /setspawn on spawn, Farm 0.5–1s later |
+| `/fprofit pickaxe` | Auto pickaxe ability (right-click when cooldown hits 0) |
+| `/fprofit serverpack` | Hypixel server pack at lowest priority (default: ON) |
 
-Noms dans `farmingprofit.json` : `pestLoadoutName` (défaut `Pest`), `farmLoadoutName` (défaut `Farm`).
+Names in `farmingprofit.json`: `pestLoadoutName` (default `Pest`), `farmLoadoutName` (default `Farm`).
 
-## Alerte cooldown Pest (tab)
+## Pest cooldown alert (tab)
 
-Le widget **Pests** du tab Hypixel affiche un chrono `Cooldown: 1m 58s`. À **2m50** restantes, un gros titre s’affiche avec un **compte à rebours de 5 secondes** et un son.
+The Hypixel tab **Pests** widget shows a timer `Cooldown: 1m 58s`. At **2m50** remaining, a large title appears with a **5-second countdown** and a sound.
 
-Le widget Pests doit être activé : `/widget` → Pests.
+The Pests widget must be enabled: `/widget` → Pests.
 
-| Commande | Description |
+| Command | Description |
 | --- | --- |
-| `/fprofit pestalert` | Active ou désactive l’alerte (défaut : ON) |
+| `/fprofit pestalert` | Enable or disable the alert (default: ON) |
 
-Réglages dans `farmingprofit.json` : `pestCooldownAlertAtSeconds` (défaut `170` = 2m50), `pestCooldownAlertCountdown` (défaut `5`).
+Settings in `farmingprofit.json`: `pestCooldownAlertAtSeconds` (default `170` = 2m50), `pestCooldownAlertCountdown` (default `5`).
 
-À **2m50**, si `autoPestLoadout` est ON, le mod équipe le loadout **Pest**. Au spawn, il envoie `/setspawn`, puis **0,5 à 1 s après** il remet **Farm**.
+At **2m50**, if `autoPestLoadout` is ON, the mod equips the **Pest** loadout. On spawn it sends `/setspawn`, then **0.5–1s later** it switches back to **Farm**.
 
-| Commande | Description |
+| Command | Description |
 | --- | --- |
-| `/fprofit pestauto` | Active ou désactive le switch auto (défaut : ON) |
+| `/fprofit pestauto` | Enable or disable auto switch (default: ON) |
 
-## Auto ability pioche (mining)
+## Auto pickaxe ability (mining)
 
-Quand le cooldown de l’ability pioche arrive à **0** (overlay item / chat *You used your … Pickaxe Ability!*), le mod fait **un clic droit** si une **pioche / drill** SkyBlock est en main. Pas de clic au Garden, ni dans un menu.
+When pickaxe ability cooldown hits **0** (item overlay / chat *You used your … Pickaxe Ability!*), the mod **right-clicks** if a SkyBlock **pickaxe / drill** is in hand. No click in the Garden, or while a menu is open.
 
-| Commande | Description |
+| Command | Description |
 | --- | --- |
-| `/fprofit pickaxe` | Active ou désactive (défaut : ON) |
+| `/fprofit pickaxe` | Enable or disable (default: ON) |
 
-## Pack serveur Hypixel
+## Hypixel server pack
 
-Hypixel force le pack **World Specific Resources Hypixel Skyblock**. Le mod l’accepte (obligatoire pour jouer) et le laisse chargé pour les textures d’items SkyBlock, mais le place **tout en dernier** : le pack vanilla Minecraft et tes packs perso passent devant.
+Hypixel forces the **World Specific Resources Hypixel Skyblock** pack. The mod still accepts it (required to play) and keeps it loaded for SkyBlock item textures, but puts it **last**: vanilla Minecraft and your packs take priority.
 
-| Commande | Description |
+| Command | Description |
 | --- | --- |
-| `/fprofit serverpack` | Active ou désactive la priorité basse (défaut : ON) |
+| `/fprofit serverpack` | Enable or disable low priority (default: ON) |
 
-Avec **Polar**, ces mixins (pack + hitbox crops) sont désactivés : Polar accroche les mêmes méthodes en natif, ce qui crashait Windows (`ntdll`). HUD, pest, vente et logbook restent actifs.
+With **Polar**, these mixins (pack + crop hitboxes) are disabled: Polar hooks the same methods natively, which crashed Windows (`ntdll`). HUD, pest, sell, and logbook stay active.
 
-## Vente NPC (sacks + cookie menu)
+## NPC sell (sacks + cookie menu)
 
-Vide le sack, ouvre `/boostercookiemenu`, puis **middle-click** uniquement l’item indiqué (100 ms entre chaque slot). Recheck l’inventaire à la fin de chaque passe.
+Empties the sack, opens `/boostercookiemenu`, then **middle-clicks** only the named item (100 ms between slots). Rechecks inventory at the end of each pass.
 
-Un **Booster Cookie** actif est nécessaire.
+An active **Booster Cookie** is required.
 
-| Commande | Description |
+| Command | Description |
 | --- | --- |
-| `/fprofit sell <item>` | 1 tour : `/gfs <item> 9999` → menu cookie → vente |
-| `/fprofit sell <item> <fois>` | Répète le cycle `<fois>` fois (1–999) |
-| `/fprofit sell cancel` | Annule la vente en cours |
+| `/fprofit sell <item>` | 1 round: `/gfs <item> 9999` → cookie menu → sell |
+| `/fprofit sell <item> <times>` | Repeat the cycle `<times>` times (1–999) |
+| `/fprofit sell cancel` | Cancel the current sell |
 
-Stop automatique si **3 tours d’affilée** ne vendent rien.
+Stops automatically after **3 empty rounds** in a row.
 
-Exemples :
+Examples:
 
 ```
 /fprofit sell enchanted_wheat
@@ -140,25 +140,25 @@ Exemples :
 /fprofit sell cancel
 ```
 
-Seul l’item nommé est vendu. Les autres slots de l’inventaire ne sont pas cliqués.
+Only the named item is sold. Other inventory slots are not clicked.
 
-## Mises à jour
+## Updates
 
-Au login (si internet), le mod compare sa version à la release GitHub **Latest** (Minecraft **26.1.2** uniquement). S’il y a une update, un bouton **[Installer]** apparaît dans le chat : ça télécharge le JAR **26.1.2** dans `mods/`, ferme Minecraft, puis un script remplace l’ancien fichier. Il suffit de **relancer le jeu**.
+At login (if online), the mod compares its version to the GitHub **Latest** release (Minecraft **26.1.2** only). If an update exists, an **[Install]** button appears in chat: it downloads the **26.1.2** JAR into `mods/`, closes Minecraft, then a script replaces the old file. Just **relaunch the game**.
 
-Le JAR **Minecraft 26.2** n’est **jamais** téléchargé automatiquement : il faut le prendre sur GitHub, release « Minecraft 26.2 ».
+The **Minecraft 26.2** JAR is **never** downloaded automatically: grab it from GitHub, “Minecraft 26.2” release.
 
-Windows verrouille le JAR tant que Minecraft tourne : d’où la fermeture automatique (comme libautoupdate / ModUpdater).
+Windows locks the JAR while Minecraft is running, which is why the game is closed automatically (same idea as libautoupdate / ModUpdater).
 
-| Commande | Description |
+| Command | Description |
 | --- | --- |
-| `/fprofit update` | Relance la vérif GitHub |
-| `/fprofit update install` | Installe la Latest **26.1.2** et ferme le jeu (jamais le JAR 26.2) |
+| `/fprofit update` | Run the GitHub check again |
+| `/fprofit update install` | Install Latest **26.1.2** and close the game (never the 26.2 JAR) |
 
-Désactiver : `"checkUpdates": false` dans `farmingprofit.json`.
+Disable with `"checkUpdates": false` in `farmingprofit.json`.
 
 ## Config
 
-Les réglages (HUD, position, mode de prix, hitbox crops) sont sauvés dans :
+Settings (HUD, position, price mode, crop hitboxes) are saved in:
 
 `.minecraft/config/farmingprofit.json`

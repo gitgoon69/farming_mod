@@ -10,10 +10,10 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 /**
- * Bandeau «-en-ciel « Mode Pest » pour ne pas oublier de remettre le loadout normal.
+ * Rainbow banner for Pest Mode so you do not forget to switch back to the farm loadout.
  */
 public final class PestModeHud {
-	private static final String TEXT = "Mode Pest";
+	private static final String TEXT = "Pest Mode";
 	private static final float SCALE = 2.0f;
 
 	private PestModeHud() {

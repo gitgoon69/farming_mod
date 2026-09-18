@@ -19,8 +19,8 @@ import dev.farmingprofit.FarmingProfitMod;
 import dev.farmingprofit.client.garden.Crop;
 
 /**
- * Prix Bazaar via l'API Cofl {@code GET /api/bazaar/{itemTag}/snapshot}.
- * Le prix d'un crop = prix de l'item enchanted / 160.
+ * Bazaar prices via the Cofl API {@code GET /api/bazaar/{itemTag}/snapshot}.
+ * Crop price = enchanted item price / 160.
  */
 public final class CoflBazaarService {
 	private static final String SNAPSHOT = "https://sky.coflnet.com/api/bazaar/%s/snapshot";
@@ -64,8 +64,8 @@ public final class CoflBazaarService {
 	}
 
 	/**
-	 * Prix unitaire d'un crop normal, dérivé du enchanted (/160).
-	 * Champignons: moyenne red + brown. Blé: optionnellement + seeds.
+	 * Unit price of a normal crop, derived from enchanted (/160).
+	 * Mushrooms: average of red + brown. Wheat: optionally + seeds.
 	 */
 	public double unitPrice(Crop crop, boolean sellOffer, boolean includeSeeds) {
 		double enchanted = selected(crop.enchantedBazaarId, sellOffer);
@@ -84,7 +84,7 @@ public final class CoflBazaarService {
 		if (crop == Crop.WHEAT && includeSeeds) {
 			double seedEnchanted = selected(Crop.ENCHANTED_SEEDS, sellOffer);
 			if (seedEnchanted > 0) {
-				// Ratio Skyblocker: ~40% wheat / 60% seeds dans le compteur Cultivating.
+				// Skyblocker ratio: ~40% wheat / 60% seeds in the Cultivating counter.
 				perCrop = perCrop * 0.4 + (seedEnchanted / Crop.ENCHANTED_RATIO) * 0.6;
 			}
 		}
@@ -136,10 +136,10 @@ public final class CoflBazaarService {
 			refreshing = false;
 			if (error != null) {
 				lastError = error.getMessage();
-				FarmingProfitMod.LOGGER.warn("Échec refresh Cofl: {}", error.toString());
+				FarmingProfitMod.LOGGER.warn("Cofl refresh failed: {}", error.toString());
 			} else {
 				lastError = null;
-				FarmingProfitMod.LOGGER.info("Prix Bazaar Cofl mis à jour ({} items).", quotes.size());
+				FarmingProfitMod.LOGGER.info("Cofl Bazaar prices updated ({} items).", quotes.size());
 			}
 		});
 	}

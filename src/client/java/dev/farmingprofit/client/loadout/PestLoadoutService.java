@@ -27,7 +27,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ItemLore;
 
 /**
- * Clic droit canne → {@code /loadout} → Pest. Reclic canne en Mode Pest → Farm.
+ * Right-click rod → {@code /loadout} → Pest. Right-click again in Pest Mode → Farm.
  */
 public final class PestLoadoutService {
 	private static final int WAIT_MENU_TIMEOUT_TICKS = 80;
@@ -151,14 +151,14 @@ public final class PestLoadoutService {
 		start(client, player, toPest, true);
 	}
 
-	/** Toggle canne : Pest si inactif, Farm si Mode Pest. */
+	/** Rod toggle: Pest if inactive, Farm if Pest Mode. */
 	public void startFromCommand() {
 		Minecraft client = Minecraft.getInstance();
 		if (client.player == null) {
 			return;
 		}
 		if (running()) {
-			chat("Changement de loadout déjà en cours.", ChatFormatting.RED);
+			chat("Loadout switch already running.", ChatFormatting.RED);
 			return;
 		}
 		quiet = false;
@@ -227,19 +227,19 @@ public final class PestLoadoutService {
 						ticksInPhase = 0;
 					}
 				} else if (ticksInPhase >= WAIT_MENU_TIMEOUT_TICKS) {
-					chat("Menu loadout / item « " + pendingTarget + " » introuvable.", ChatFormatting.RED);
+					chat("Loadout menu / item \"" + pendingTarget + "\" not found.", ChatFormatting.RED);
 					reset();
 				}
 			}
 			case CLICK -> {
 				if (!isLoadoutMenu(client)) {
-					chat("Menu loadout fermé trop tôt.", ChatFormatting.RED);
+					chat("Loadout menu closed too early.", ChatFormatting.RED);
 					reset();
 					return;
 				}
 				int slotId = findTargetSlot(player.containerMenu);
 				if (slotId < 0) {
-					chat("Loadout « " + pendingTarget + " » introuvable dans le menu.", ChatFormatting.RED);
+					chat("Loadout \"" + pendingTarget + "\" not found in the menu.", ChatFormatting.RED);
 					reset();
 					return;
 				}
@@ -259,7 +259,7 @@ public final class PestLoadoutService {
 				if (ticksInPhase >= CLOSE_DELAY_TICKS) {
 					ClientScreens.close(client);
 					if (!quiet) {
-						chat("Loadout " + pendingTarget + " équipé.", ChatFormatting.GREEN);
+						chat("Loadout " + pendingTarget + " equipped.", ChatFormatting.GREEN);
 					}
 					Boolean next = queuedToPest;
 					queuedToPest = null;
@@ -424,8 +424,8 @@ public final class PestLoadoutService {
 	}
 
 	/**
-	 * Un clic (toggle Attack/Destroy vanilla) après le GUI loadout.
-	 * Le menu remet {@code missTime} à 10000 et relâche le toggle souris, qui n’est pas restauré.
+	 * One click (vanilla Attack/Destroy toggle) after the loadout GUI.
+	 * The menu sets {@code missTime} to 10000 and releases the mouse toggle, which is not restored.
 	 */
 	private void tickResumeAttack(Minecraft client) {
 		if (resumeAttackTicks <= 0 || running()) {

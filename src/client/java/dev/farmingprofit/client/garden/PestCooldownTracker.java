@@ -15,8 +15,8 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
 
 /**
- * Lit {@code Cooldown: 2m 50s} dans le widget Pests du tab, puis affiche
- * un compte à rebours de 5 s.
+ * Reads {@code Cooldown: 2m 50s} from the tab Pests widget, then shows
+ * a 5s countdown.
  */
 public final class PestCooldownTracker {
 	private static final Pattern COOLDOWN = Pattern.compile("(?i)cooldown:\\s*(.+)$");

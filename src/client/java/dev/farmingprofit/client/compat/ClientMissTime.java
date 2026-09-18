@@ -5,7 +5,7 @@ import java.lang.reflect.Field;
 import net.minecraft.client.Minecraft;
 
 /**
- * {@code Minecraft.missTime} (26.1.2) ou champ équivalent si déplacé en 26.2.
+ * {@code Minecraft.missTime} (26.1.2) or the equivalent field if moved in 26.2.
  */
 public final class ClientMissTime {
 	private static final Field FIELD = find();

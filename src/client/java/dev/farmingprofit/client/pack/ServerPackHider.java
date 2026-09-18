@@ -14,7 +14,7 @@ import net.minecraft.server.packs.repository.Pack;
 import net.minecraft.server.packs.repository.PackSource;
 
 /**
- * Garde le pack serveur Hypixel (textures d’items SkyBlock) en priorité la plus basse.
+ * Keeps the Hypixel server pack (SkyBlock item textures) at the lowest priority.
  */
 public final class ServerPackHider {
 	private ServerPackHider() {
@@ -56,8 +56,8 @@ public final class ServerPackHider {
 	}
 
 	/**
-	 * Place les packs serveur tout en bas : vanilla et packs perso passent devant,
-	 * les textures d’items SkyBlock restent en fallback.
+	 * Puts server packs at the bottom: vanilla and personal packs take priority,
+	 * SkyBlock item textures stay as fallback.
 	 */
 	public static List<Pack> withServerPacksLowest(List<Pack> selected) {
 		List<Pack> serverPacks = new ArrayList<>();

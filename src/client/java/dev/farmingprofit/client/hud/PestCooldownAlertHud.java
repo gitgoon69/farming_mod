@@ -9,7 +9,7 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 /**
- * Gros titre central quand le cooldown pest du tab passe sous le seuil.
+ * Large center title when the tab pest cooldown drops under the threshold.
  */
 public final class PestCooldownAlertHud {
 	private PestCooldownAlertHud() {

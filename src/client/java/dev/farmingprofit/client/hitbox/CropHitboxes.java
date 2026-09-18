@@ -12,14 +12,14 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 /**
- * Hitbox de visée uniquement (pas la collision).
- * Mature : cube 1×1×1. Pas mature : hitbox la plus basse (stade 0).
+ * Aim hitbox only (not collision).
+ * Mature: 1×1×1 cube. Not mature: lowest hitbox (stage 0).
  */
 public final class CropHitboxes {
 	public static final VoxelShape FULL_BLOCK = Shapes.block();
-	/** Blé / carotte / pomme de terre âge 0 : 2 pixels de haut. */
+	/** Wheat / carrot / potato age 0: 2 pixels tall. */
 	public static final VoxelShape LOW_CROP = Block.column(16.0, 0.0, 2.0);
-	/** Nether wart âge 0 : 5 pixels de haut. */
+	/** Nether wart age 0: 5 pixels tall. */
 	public static final VoxelShape LOW_NETHER_WART = Block.column(16.0, 0.0, 5.0);
 
 	private CropHitboxes() {

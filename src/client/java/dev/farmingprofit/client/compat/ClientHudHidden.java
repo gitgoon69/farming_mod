@@ -9,7 +9,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
 
 /**
- * {@code Options.hideGui} en 26.1.2, {@code Hud#isHidden()} en 26.2.
+ * {@code Options.hideGui} on 26.1.2, {@code Hud#isHidden()} on 26.2.
  */
 public final class ClientHudHidden {
 	private static final MethodHandle GET = resolve();

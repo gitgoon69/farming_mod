@@ -3,7 +3,7 @@
 	"id": "farmingprofit",
 	"version": "${version}",
 	"name": "Farming Profit",
-	"description": "Compte les coins/heure en farmant des crops sur le Garden Hypixel SkyBlock, avec les prix Bazaar Cofl (enchanted / 160).",
+	"description": "Tracks coins/hour while farming crops on Hypixel SkyBlock Garden, using Cofl Bazaar prices (enchanted / 160).",
 	"authors": [
 		"matte"
 	],

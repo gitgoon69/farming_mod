@@ -21,9 +21,9 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
 /**
- * Vide un sack via {@code /gfs}, ouvre {@code /boostercookiemenu}, puis vend
- * uniquement l'item ciblé (1 middle-click par slot, 100 ms d'écart).
- * Répète le cycle N fois ; stop après 3 tours d'affilée sans vente.
+ * Empties a sack with {@code /gfs}, opens {@code /boostercookiemenu}, then sells
+ * only the targeted item (1 middle-click per slot, 100 ms apart).
+ * Repeats the cycle N times; stops after 3 empty rounds in a row.
  */
 public final class NpcSellService {
 	private static final int CLICK_DELAY_TICKS = 2;
@@ -57,24 +57,24 @@ public final class NpcSellService {
 
 	public void start(String itemQuery) {
 		if (itemQuery == null || itemQuery.isBlank()) {
-			chat("Donne un nom d'item. Exemple: /fprofit sell enchanted_wheat 5", ChatFormatting.RED);
+			chat("Give an item name. Example: /fprofit sell enchanted_wheat 5", ChatFormatting.RED);
 			return;
 		}
 		if (running()) {
-			chat("Vente déjà en cours. /fprofit sell cancel pour arrêter.", ChatFormatting.RED);
+			chat("Sell already running. /fprofit sell cancel to stop.", ChatFormatting.RED);
 			return;
 		}
 
 		Minecraft client = Minecraft.getInstance();
 		LocalPlayer player = client.player;
 		if (player == null || client.gameMode == null) {
-			chat("Tu dois être en jeu.", ChatFormatting.RED);
+			chat("You must be in-game.", ChatFormatting.RED);
 			return;
 		}
 
 		ParsedStart parsed = parseQuery(itemQuery.trim());
 		if (parsed.item().isBlank()) {
-			chat("Donne un nom d'item. Exemple: /fprofit sell enchanted_wheat 5", ChatFormatting.RED);
+			chat("Give an item name. Example: /fprofit sell enchanted_wheat 5", ChatFormatting.RED);
 			return;
 		}
 
@@ -86,17 +86,17 @@ public final class NpcSellService {
 		emptyRounds = 0;
 		soldCount = 0;
 		soldThisRound = 0;
-		chat("Vente de « " + rawQuery + " » (" + repeatCount + " tour(s))…", ChatFormatting.YELLOW);
+		chat("Selling \"" + rawQuery + "\" (" + repeatCount + " round(s))…", ChatFormatting.YELLOW);
 		beginRound(client, player, true);
 		FarmingProfitMod.LOGGER.info("NPC sell start item={} repeats={}", targetId, repeatCount);
 	}
 
 	public void cancel() {
 		if (!running()) {
-			chat("Aucune vente en cours.", ChatFormatting.GRAY);
+			chat("No sell in progress.", ChatFormatting.GRAY);
 			return;
 		}
-		chat("Vente annulée. Total : " + soldCount + " slot(s).", ChatFormatting.RED);
+		chat("Sell cancelled. Total: " + soldCount + " slot(s).", ChatFormatting.RED);
 		reset();
 	}
 
@@ -106,7 +106,7 @@ public final class NpcSellService {
 		}
 		LocalPlayer player = client.player;
 		if (player == null || client.gameMode == null) {
-			chat("Joueur introuvable, vente stoppée.", ChatFormatting.RED);
+			chat("Player not found, sell stopped.", ChatFormatting.RED);
 			reset();
 			return;
 		}
@@ -137,13 +137,13 @@ public final class NpcSellService {
 					ticksInPhase = 0;
 					FarmingProfitMod.LOGGER.debug("NPC sell round {}/{} slots={}", currentRound, repeatCount, slotsToClick.size());
 				} else if (ticksInPhase >= WAIT_MENU_TIMEOUT_TICKS) {
-					chat("Le menu cookie ne s'est pas ouvert. Cookie actif ? Vente annulée.", ChatFormatting.RED);
+					chat("Cookie menu did not open. Cookie active? Sell cancelled.", ChatFormatting.RED);
 					reset();
 				}
 			}
 			case SELLING -> {
 				if (!isNpcMenuOpen(client)) {
-					chat("Menu fermé, vente interrompue après " + soldCount + " slot(s).", ChatFormatting.RED);
+					chat("Menu closed, sell interrupted after " + soldCount + " slot(s).", ChatFormatting.RED);
 					reset();
 					return;
 				}
@@ -222,12 +222,12 @@ public final class NpcSellService {
 		}
 
 		if (emptyRounds >= MAX_EMPTY_ROUNDS) {
-			chat("Vente stoppée : plus rien à vendre. Total : " + soldCount + " slot(s).", ChatFormatting.YELLOW);
+			chat("Sell stopped: nothing left to sell. Total: " + soldCount + " slot(s).", ChatFormatting.YELLOW);
 			reset();
 			return;
 		}
 		if (currentRound >= repeatCount) {
-			chat("Vente terminée : " + soldCount + " slot(s).", ChatFormatting.GREEN);
+			chat("Sell finished: " + soldCount + " slot(s).", ChatFormatting.GREEN);
 			reset();
 			return;
 		}

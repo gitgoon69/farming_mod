@@ -9,7 +9,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.world.item.ItemStack;
 
 /**
- * Compte les crops via le compteur Cultivating (Skyblocker) et le temps de farm actif (SkyHanni).
+ * Counts crops via the Cultivating counter (Skyblocker) and active farm time (SkyHanni).
  */
 public final class FarmingTracker {
 	private static final long WINDOW_MS = 5_000L;
