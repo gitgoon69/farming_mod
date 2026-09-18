@@ -38,7 +38,8 @@ import net.minecraft.network.chat.Style;
 public final class UpdateChecker {
 	public static final String GITHUB_REPO = "matteorlt/farming_mod";
 	private static final String LATEST_API = "https://api.github.com/repos/" + GITHUB_REPO + "/releases/latest";
-	private static final String RELEASES_PAGE = "https://github.com/" + GITHUB_REPO + "/releases/latest";
+	private static final String RELEASES_API = "https://api.github.com/repos/" + GITHUB_REPO + "/releases?per_page=40";
+	private static final String RELEASES_PAGE = "https://github.com/" + GITHUB_REPO + "/releases";
 
 	private final HttpClient http = HttpClient.newBuilder()
 			.connectTimeout(Duration.ofSeconds(10))
@@ -146,26 +147,15 @@ public final class UpdateChecker {
 
 	private void fetchLatest() {
 		try {
-			HttpRequest request = HttpRequest.newBuilder(URI.create(LATEST_API))
-					.timeout(Duration.ofSeconds(15))
-					.header("User-Agent", "FarmingProfit/" + currentVersion() + " (Minecraft Fabric)")
-					.header("Accept", "application/vnd.github+json")
-					.GET()
-					.build();
-			HttpResponse<String> response = http.send(request, HttpResponse.BodyHandlers.ofString());
-			if (response.statusCode() == 404) {
+			JsonObject json = runningMinecraft26_2() ? fetchMinecraft26_2Release() : getJsonObject(LATEST_API);
+			if (json == null) {
 				lastError = "no-release";
 				latest = null;
 				return;
 			}
-			if (response.statusCode() != 200) {
-				lastError = "HTTP " + response.statusCode();
-				return;
-			}
-			JsonObject json = JsonParser.parseString(response.body()).getAsJsonObject();
 			String tag = json.has("tag_name") ? json.get("tag_name").getAsString() : "";
 			String htmlUrl = json.has("html_url") ? json.get("html_url").getAsString() : RELEASES_PAGE;
-			String jarUrl = runningMinecraft26_2() ? null : findJarUrl(json.getAsJsonArray("assets"));
+			String jarUrl = findJarUrl(json.getAsJsonArray("assets"), runningMinecraft26_2());
 			latest = new Release(tag, normalizeVersion(tag), htmlUrl, jarUrl);
 			lastError = null;
 		} catch (InterruptedException e) {
@@ -178,6 +168,52 @@ public final class UpdateChecker {
 		}
 	}
 
+	private JsonObject fetchMinecraft26_2Release() throws IOException, InterruptedException {
+		HttpResponse<String> response = sendGet(RELEASES_API);
+		if (response.statusCode() == 404) {
+			return null;
+		}
+		if (response.statusCode() != 200) {
+			throw new IOException("HTTP " + response.statusCode());
+		}
+		JsonArray releases = JsonParser.parseString(response.body()).getAsJsonArray();
+		for (JsonElement element : releases) {
+			if (!element.isJsonObject()) {
+				continue;
+			}
+			JsonObject release = element.getAsJsonObject();
+			if (release.has("draft") && release.get("draft").getAsBoolean()) {
+				continue;
+			}
+			String tag = release.has("tag_name") ? release.get("tag_name").getAsString() : "";
+			if (tag.toLowerCase(Locale.ROOT).endsWith("-26.2")) {
+				return release;
+			}
+		}
+		return null;
+	}
+
+	private JsonObject getJsonObject(String url) throws IOException, InterruptedException {
+		HttpResponse<String> response = sendGet(url);
+		if (response.statusCode() == 404) {
+			return null;
+		}
+		if (response.statusCode() != 200) {
+			throw new IOException("HTTP " + response.statusCode());
+		}
+		return JsonParser.parseString(response.body()).getAsJsonObject();
+	}
+
+	private HttpResponse<String> sendGet(String url) throws IOException, InterruptedException {
+		HttpRequest request = HttpRequest.newBuilder(URI.create(url))
+				.timeout(Duration.ofSeconds(15))
+				.header("User-Agent", "FarmingProfit/" + currentVersion() + " (Minecraft Fabric)")
+				.header("Accept", "application/vnd.github+json")
+				.GET()
+				.build();
+		return http.send(request, HttpResponse.BodyHandlers.ofString());
+	}
+
 	private void doInstall() {
 		if (latest == null || !updateAvailable() || latest.jarUrl() == null) {
 			fetchLatest();
@@ -188,13 +224,8 @@ public final class UpdateChecker {
 		if (!updateAvailable()) {
 			throw new IllegalStateException("Already up to date (" + currentVersion() + ").");
 		}
-		if (runningMinecraft26_2()) {
-			throw new IllegalStateException(
-					"On Minecraft 26.2, download the JAR by hand (no auto-install): "
-							+ minecraft26_2PageUrl(latest));
-		}
 		if (latest.jarUrl() == null || latest.jarUrl().isBlank()) {
-			throw new IllegalStateException("The release has no JAR (missing GitHub asset).");
+			throw new IllegalStateException("The release has no JAR for Minecraft " + runningMinecraftVersion() + ".");
 		}
 
 		Path pending = UpdateInstaller.pendingFile();
@@ -252,7 +283,7 @@ public final class UpdateChecker {
 		return false;
 	}
 
-	private static String findJarUrl(JsonArray assets) {
+	private static String findJarUrl(JsonArray assets, boolean minecraft26_2) {
 		if (assets == null) {
 			return null;
 		}
@@ -264,11 +295,15 @@ public final class UpdateChecker {
 			}
 			JsonObject asset = element.getAsJsonObject();
 			String name = asset.has("name") ? asset.get("name").getAsString() : "";
-			if (!isReleaseJar(name) || isMinecraft26_2Jar(name)) {
+			if (!isReleaseJar(name)) {
+				continue;
+			}
+			boolean jar26_2 = isMinecraft26_2Jar(name);
+			if (minecraft26_2 != jar26_2) {
 				continue;
 			}
 			String url = asset.get("browser_download_url").getAsString();
-			if (isMinecraft26_1Jar(name)) {
+			if (minecraft26_2 || isMinecraft26_1Jar(name)) {
 				preferred = url;
 			} else if (fallback == null) {
 				fallback = url;
@@ -294,7 +329,7 @@ public final class UpdateChecker {
 		return runningMinecraftVersion().startsWith("26.2");
 	}
 
-	private static String runningMinecraftVersion() {
+	public static String runningMinecraftVersion() {
 		return FabricLoader.getInstance()
 				.getModContainer("minecraft")
 				.map(container -> container.getMetadata().getVersion().getFriendlyString())
@@ -305,11 +340,7 @@ public final class UpdateChecker {
 		if (release == null || release.tag() == null || release.tag().isBlank()) {
 			return RELEASES_PAGE;
 		}
-		String tag = release.tag();
-		if (!tag.endsWith("-26.2")) {
-			tag = tag + "-26.2";
-		}
-		return "https://github.com/" + GITHUB_REPO + "/releases/tag/" + tag;
+		return "https://github.com/" + GITHUB_REPO + "/releases/tag/" + release.tag();
 	}
 
 	private void announceFromCommand(Minecraft client) {
@@ -350,23 +381,16 @@ public final class UpdateChecker {
 		String githubUrl = minecraft26_2 ? minecraft26_2PageUrl(release) : release.pageUrl();
 		client.player.sendSystemMessage(Component.literal("[Farming Profit] Update " + release.version()
 				+ " available (current " + currentVersion() + ").").withStyle(ChatFormatting.GOLD));
-		if (minecraft26_2) {
-			client.player.sendSystemMessage(Component.literal(
-					"[Farming Profit] Minecraft 26.2: download the JAR by hand, auto-install is disabled.")
-					.withStyle(ChatFormatting.YELLOW));
-		}
 
-		MutableComponent line = Component.literal("");
-		if (!minecraft26_2) {
-			line = line.append(Component.literal("[Install]")
-					.withStyle(style -> style
-							.withClickEvent(new ClickEvent.RunCommand("/fprofit update install"))
-							.withHoverEvent(new HoverEvent.ShowText(Component.literal(
-									"Download the 26.1.2 JAR, close Minecraft, then relaunch")))
-							.withColor(ChatFormatting.GREEN)
-							.withUnderlined(true)));
-		}
-		line = line.append(Component.literal(minecraft26_2 ? "[Minecraft 26.2 JAR]" : "  [GitHub page]")
+		String mc = runningMinecraftVersion();
+		MutableComponent line = Component.literal("[Install]")
+				.withStyle(style -> style
+						.withClickEvent(new ClickEvent.RunCommand("/fprofit update install"))
+						.withHoverEvent(new HoverEvent.ShowText(Component.literal(
+								"Download the Minecraft " + mc + " JAR, close Minecraft, then relaunch")))
+						.withColor(ChatFormatting.GREEN)
+						.withUnderlined(true));
+		line = line.append(Component.literal(minecraft26_2 ? "  [Minecraft 26.2 page]" : "  [GitHub page]")
 				.withStyle(style -> withLink(style, githubUrl).withColor(ChatFormatting.AQUA).withUnderlined(true)));
 		line = line.append(Component.literal("  [Check]")
 				.withStyle(style -> style
@@ -438,6 +462,8 @@ public final class UpdateChecker {
 		if (value.startsWith("v") || value.startsWith("V")) {
 			value = value.substring(1);
 		}
+		value = value.replaceAll("(?i)-minecraft-26\\.2$", "");
+		value = value.replaceAll("(?i)-26\\.2$", "");
 		return value.isEmpty() ? "0" : value;
 	}
 

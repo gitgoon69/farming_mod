@@ -148,7 +148,7 @@ public final class CoflBazaarService {
 		try {
 			HttpRequest request = HttpRequest.newBuilder(URI.create(SNAPSHOT.formatted(productId)))
 					.timeout(Duration.ofSeconds(15))
-					.header("User-Agent", "FarmingProfit/1.0 (Minecraft 26.1.2 Fabric)")
+					.header("User-Agent", "FarmingProfit/" + FarmingProfitMod.MOD_ID + " (Minecraft Fabric)")
 					.GET()
 					.build();
 			HttpResponse<String> response = http.send(request, HttpResponse.BodyHandlers.ofString());

@@ -29,7 +29,7 @@ public final class ModConfig {
 	public boolean pestRodLoadout = true;
 	public String pestLoadoutName = "Pest";
 	public String farmLoadoutName = "Farm";
-	/** Check GitHub (matteorlt/farming_mod) on login. */
+	/** Check GitHub on login for this Minecraft version. */
 	public boolean checkUpdates = true;
 	/** Sends UUID + username + version to Supabase on login (private table). */
 	public boolean usagePing = true;

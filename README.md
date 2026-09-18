@@ -13,7 +13,7 @@ Releases: https://github.com/matteorlt/farming_mod/releases
 
 Install **one** JAR in `.minecraft/mods/`, with Fabric Loader + Fabric API for **the same** Minecraft version. Do not use the 26.2 JAR on 26.1.2.
 
-In-game auto-install **never** downloads the 26.2 JAR.
+In-game auto-install only downloads the JAR that matches your Minecraft version.
 
 ## Features
 
@@ -39,10 +39,11 @@ Java 25 required.
 ./gradlew.bat build "-Pmc=26.2"
 ```
 
-JAR: `build/libs/farmingprofit-1.0.16.jar` (26.1.2) and `farmingprofit-1.0.16-minecraft-26.2.jar` (26.2)
+JAR: `build/libs/farmingprofit-1.0.17.jar` (26.1.2) and `farmingprofit-1.0.17-minecraft-26.2.jar` (26.2)
 
 ## Updates
 
-On **26.1.2**, at login, the mod compares its version to the GitHub **Latest** release and offers **[Install]** (26.1.2 JAR only).
+At login, the mod checks GitHub for **your** Minecraft version and offers **[Install]**.
 
-On **26.2**, there is no auto-install: chat points to the GitHub “Minecraft 26.2” release.
+- **26.1.2** → Latest → `farmingprofit-x.y.z.jar`
+- **26.2** → “Minecraft 26.2” release → `farmingprofit-x.y.z-minecraft-26.2.jar`

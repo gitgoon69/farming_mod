@@ -2,9 +2,9 @@
 
 Every command starts with **`/fprofit`**.
 
-## In-game menu (26.1.2)
+## In-game menu
 
-Every option (HUD, hitbox, pest, pickaxe, pack, updates) lives in one screen, with vanilla icons.
+Every option (HUD, hitbox, pest, pickaxe, pack, updates) lives in one screen, with vanilla icons. Same menu on **26.1.2** and **26.2**.
 
 | Command | Description |
 | --- | --- |
@@ -144,16 +144,21 @@ Only the named item is sold. Other inventory slots are not clicked.
 
 ## Updates
 
-At login (if online), the mod compares its version to the GitHub **Latest** release (Minecraft **26.1.2** only). If an update exists, an **[Install]** button appears in chat: it downloads the **26.1.2** JAR into `mods/`, closes Minecraft, then a script replaces the old file. Just **relaunch the game**.
+At login (if online), the mod checks GitHub for **the same Minecraft version** you are running.
 
-The **Minecraft 26.2** JAR is **never** downloaded automatically: grab it from GitHub, “Minecraft 26.2” release.
+- **26.1.2** → GitHub **Latest** (`farmingprofit-x.y.z.jar`)
+- **26.2** → GitHub **Minecraft 26.2** release (`farmingprofit-x.y.z-minecraft-26.2.jar`)
+
+If an update exists, **[Install]** appears in chat: it downloads that JAR into `mods/`, closes Minecraft, then a script replaces the old file. Just **relaunch the game**.
+
+A 26.1.2 client never auto-installs a 26.2 JAR, and a 26.2 client never auto-installs a 26.1.2 JAR.
 
 Windows locks the JAR while Minecraft is running, which is why the game is closed automatically (same idea as libautoupdate / ModUpdater).
 
 | Command | Description |
 | --- | --- |
 | `/fprofit update` | Run the GitHub check again |
-| `/fprofit update install` | Install Latest **26.1.2** and close the game (never the 26.2 JAR) |
+| `/fprofit update install` | Install the matching JAR and close the game |
 
 Disable with `"checkUpdates": false` in `farmingprofit.json`.
 

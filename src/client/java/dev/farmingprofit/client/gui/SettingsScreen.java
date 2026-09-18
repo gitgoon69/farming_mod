@@ -171,7 +171,7 @@ public final class SettingsScreen extends Screen {
 
 		graphics.item(stack(Items.GOLDEN_HOE), px + 10, py + 10);
 		graphics.text(font, "Farming Profit", px + 32, py + 9, 0xFFFFD54A, true);
-		graphics.text(font, "Garden · " + version() + " · 26.1.2", px + 32, py + 21, 0xFFB8C4A0, false);
+		graphics.text(font, "Garden · " + version() + " · " + minecraftVersion(), px + 32, py + 21, 0xFFB8C4A0, false);
 
 		Item[] crops = {Items.WHEAT, Items.CARROT, Items.POTATO, Items.NETHER_WART, Items.COCOA_BEANS, Items.GOLDEN_CARROT};
 		for (int i = 0; i < crops.length; i++) {
@@ -398,7 +398,7 @@ public final class SettingsScreen extends Screen {
 			case 4 -> {
 				rows.add(toggle("Server pack last", "Vanilla + your packs override Hypixel", Items.CHEST,
 						() -> config.hideServerResourcePack, this::togglePack));
-				rows.add(toggle("GitHub updates", "Check Latest 26.1.2 on login", Items.COMPASS,
+				rows.add(toggle("GitHub updates", "Check this Minecraft version on login", Items.COMPASS,
 						() -> config.checkUpdates, () -> {
 							config.checkUpdates = !config.checkUpdates;
 							config.save();
@@ -408,11 +408,11 @@ public final class SettingsScreen extends Screen {
 							config.usagePing = !config.usagePing;
 							config.save();
 						}));
-				rows.add(action("Check GitHub", "Compare with the latest release", Items.COMPASS, () -> {
+				rows.add(action("Check GitHub", "Compare with the matching GitHub release", Items.COMPASS, () -> {
 					updates.refreshNow();
 					ping("GitHub check…");
 				}));
-				rows.add(action("Install update", "Download the 26.1.2 JAR and close the game", Items.NETHER_STAR, () -> {
+				rows.add(action("Install update", "Download the JAR for this Minecraft version and close the game", Items.NETHER_STAR, () -> {
 					updates.installNow();
 					ping("Installing…");
 				}));
@@ -532,6 +532,13 @@ public final class SettingsScreen extends Screen {
 	private static String version() {
 		return FabricLoader.getInstance()
 				.getModContainer(FarmingProfitMod.MOD_ID)
+				.map(container -> container.getMetadata().getVersion().getFriendlyString())
+				.orElse("?");
+	}
+
+	private static String minecraftVersion() {
+		return FabricLoader.getInstance()
+				.getModContainer("minecraft")
 				.map(container -> container.getMetadata().getVersion().getFriendlyString())
 				.orElse("?");
 	}
