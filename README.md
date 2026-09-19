@@ -25,6 +25,7 @@ In-game auto-install only downloads the JAR that matches your Minecraft version.
 - Pest cooldown alert (tab list, at 2m50, 5s countdown)
 - Auto Pest loadout at 2m50, Farm 0.5–1s after spawn
 - NPC sell (`/fprofit sell`)
+- Switch account from the title screen, pause menu, or Sys tab
 
 ## Commands
 
@@ -39,7 +40,7 @@ Java 25 required.
 ./gradlew.bat build "-Pmc=26.2"
 ```
 
-JAR: `build/libs/farmingprofit-1.0.17.jar` (26.1.2) and `farmingprofit-1.0.17-minecraft-26.2.jar` (26.2)
+JAR: `build/libs/farmingprofit-1.0.18.jar` (26.1.2) and `farmingprofit-1.0.18-minecraft-26.2.jar` (26.2)
 
 ## Updates
 

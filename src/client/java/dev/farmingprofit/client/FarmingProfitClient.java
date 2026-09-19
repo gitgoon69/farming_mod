@@ -8,6 +8,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 
 import dev.farmingprofit.FarmingProfitMod;
+import dev.farmingprofit.client.account.GameMenuAccountButton;
 import dev.farmingprofit.client.compat.ClientScreens;
 import dev.farmingprofit.client.config.ModConfig;
 import dev.farmingprofit.client.garden.Crop;
@@ -68,6 +69,7 @@ public class FarmingProfitClient implements ClientModInitializer {
 		pestCooldown = new PestCooldownTracker();
 		updates = new UpdateChecker();
 		usagePing = new UsagePingService();
+		GameMenuAccountButton.register();
 		openMenuKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
 				"key.farmingprofit.open",
 				GLFW.GLFW_KEY_UNKNOWN,

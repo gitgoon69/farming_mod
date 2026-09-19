@@ -50,15 +50,17 @@ public final class UsagePingService {
 				.getModContainer(FarmingProfitMod.MOD_ID)
 				.map(container -> container.getMetadata().getVersion().getFriendlyString())
 				.orElse("unknown");
-		CompletableFuture.runAsync(() -> ping(uuid, username, version), executor);
+		String launcher = LauncherDetector.detect();
+		CompletableFuture.runAsync(() -> ping(uuid, username, version, launcher), executor);
 	}
 
-	private void ping(UUID uuid, String username, String version) {
+	private void ping(UUID uuid, String username, String version, String launcher) {
 		try {
 			JsonObject body = new JsonObject();
 			body.addProperty("p_uuid", uuid.toString());
 			body.addProperty("p_username", username);
 			body.addProperty("p_mod_version", version);
+			body.addProperty("p_launcher", launcher);
 
 			HttpRequest request = HttpRequest.newBuilder(PING)
 					.timeout(Duration.ofSeconds(15))

@@ -8,6 +8,8 @@ import java.util.concurrent.ThreadLocalRandom;
 import org.lwjgl.glfw.GLFW;
 
 import dev.farmingprofit.FarmingProfitMod;
+import dev.farmingprofit.client.account.AccountSwitchScreen;
+import dev.farmingprofit.client.account.AccountSwitchService;
 import dev.farmingprofit.client.compat.ClientScreens;
 import dev.farmingprofit.client.compat.PolarPresence;
 import dev.farmingprofit.client.config.ModConfig;
@@ -419,6 +421,8 @@ public final class SettingsScreen extends Screen {
 				rows.add(action("NPC sell", "In-game: /fprofit sell <item> [times]", Items.EMERALD, () -> {
 					ping("/fprofit sell <item>");
 				}));
+				rows.add(action("Switch account", "Current: " + AccountSwitchService.currentName(Minecraft.getInstance())
+						+ " · paste another account token", Items.PLAYER_HEAD, this::openAccountSwitch));
 			}
 			default -> {
 			}
@@ -445,6 +449,11 @@ public final class SettingsScreen extends Screen {
 	private void openMove() {
 		Minecraft client = this.minecraft;
 		client.execute(() -> ClientScreens.set(client, new HudMoveScreen(config, tracker, prices, this)));
+	}
+
+	private void openAccountSwitch() {
+		Minecraft client = this.minecraft;
+		client.execute(() -> ClientScreens.set(client, new AccountSwitchScreen(this)));
 	}
 
 	private void selectTab(int next) {
@@ -489,7 +498,7 @@ public final class SettingsScreen extends Screen {
 
 	public static boolean blockingHud(Minecraft client) {
 		var screen = ClientScreens.current(client);
-		return screen instanceof SettingsScreen || screen instanceof HudMoveScreen;
+		return screen instanceof SettingsScreen || screen instanceof HudMoveScreen || screen instanceof AccountSwitchScreen;
 	}
 
 	@Override
@@ -577,7 +586,7 @@ public final class SettingsScreen extends Screen {
 		GARDEN("Farm", "Hitbox and AFK", Items.WHEAT),
 		PEST("Pest", "Loadout and 2m50 alert", Items.FISHING_ROD),
 		MINING("Mine", "Pickaxe ability", Items.IRON_PICKAXE),
-		SYSTEM("Sys", "Pack, updates, NPC sell", Items.NETHER_STAR);
+		SYSTEM("Sys", "Pack, updates, account, NPC sell", Items.NETHER_STAR);
 
 		final String label;
 		final String hint;

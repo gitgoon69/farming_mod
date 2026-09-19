@@ -162,6 +162,12 @@ Windows locks the JAR while Minecraft is running, which is why the game is close
 
 Disable with `"checkUpdates": false` in `farmingprofit.json`.
 
+## Switch account
+
+From the **title screen**, the **pause menu** (top-right button), or Farming Profit **Sys → Switch account**, paste another account's Minecraft access token. The token is checked with Minecraft Services, then the client session is replaced.
+
+If you are on a server, the mod disconnects so you can rejoin as the new account. The previous account is kept in `.minecraft/config/farmingprofit-accounts.json` for one-click switching (do not share that file).
+
 ## Config
 
 Settings (HUD, position, price mode, crop hitboxes) are saved in:
