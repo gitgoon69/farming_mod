@@ -10,6 +10,7 @@ import org.lwjgl.glfw.GLFW;
 import dev.farmingprofit.FarmingProfitMod;
 import dev.farmingprofit.client.account.AccountSwitchScreen;
 import dev.farmingprofit.client.account.AccountSwitchService;
+import dev.farmingprofit.client.account.PrismAccountSource;
 import dev.farmingprofit.client.compat.ClientScreens;
 import dev.farmingprofit.client.compat.PolarPresence;
 import dev.farmingprofit.client.config.ModConfig;
@@ -421,8 +422,7 @@ public final class SettingsScreen extends Screen {
 				rows.add(action("NPC sell", "In-game: /fprofit sell <item> [times]", Items.EMERALD, () -> {
 					ping("/fprofit sell <item>");
 				}));
-				rows.add(action("Switch account", "Current: " + AccountSwitchService.currentName(Minecraft.getInstance())
-						+ " · paste another account token", Items.PLAYER_HEAD, this::openAccountSwitch));
+				rows.add(action("Switch account", prismHint(), Items.PLAYER_HEAD, this::openAccountSwitch));
 			}
 			default -> {
 			}
@@ -449,6 +449,14 @@ public final class SettingsScreen extends Screen {
 	private void openMove() {
 		Minecraft client = this.minecraft;
 		client.execute(() -> ClientScreens.set(client, new HudMoveScreen(config, tracker, prices, this)));
+	}
+
+	private static String prismHint() {
+		String current = "Current: " + AccountSwitchService.currentName(Minecraft.getInstance());
+		if (PrismAccountSource.available()) {
+			return current + " · Prism accounts, one click";
+		}
+		return current + " · paste another account token";
 	}
 
 	private void openAccountSwitch() {

@@ -164,9 +164,11 @@ Disable with `"checkUpdates": false` in `farmingprofit.json`.
 
 ## Switch account
 
-From the **title screen**, the **pause menu** (top-right button), or Farming Profit **Sys → Switch account**, paste another account's Minecraft access token. The token is checked with Minecraft Services, then the client session is replaced.
+From the **title screen**, the **pause menu** (top-right button), or Farming Profit **Sys → Switch account**.
 
-If you are on a server, the mod disconnects so you can rejoin as the new account. The previous account is kept in `.minecraft/config/farmingprofit-accounts.json` for one-click switching (do not share that file).
+With **Prism Launcher**, the mod reads `%AppData%\PrismLauncher\accounts.json` and lists your Microsoft accounts. Click one to switch without copying a token (and without closing the game in Prism).
+
+Otherwise, paste a Minecraft access token. The token is checked with Minecraft Services, then the client session is replaced. If you are on a server, the mod disconnects so you can rejoin as the new account.
 
 ## Config
 
