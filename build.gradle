@@ -14,7 +14,7 @@ if (versionFile.exists()) {
 
 def mcDep = hasProperty('minecraft_dep') ? project.minecraft_dep : '~26.1'
 def mcSuffix = project.minecraft_version.toString()
-// 26.1.2 = farmingprofit-x.y.z.jar (Latest GitHub). 26.2 = farmingprofit-x.y.z-minecraft-26.2.jar
+// 26.1.2 = fermento-x.y.z.jar (Latest GitHub). 26.2 = fermento-x.y.z-minecraft-26.2.jar
 version = mcSuffix == '26.1.2' ? project.mod_version : "${project.mod_version}-minecraft-${mcSuffix}"
 group = project.maven_group
 base.archivesName = project.archives_base_name
@@ -26,7 +26,7 @@ loom {
 	splitEnvironmentSourceSets()
 
 	mods {
-		"farmingprofit" {
+		"fermento" {
 			sourceSet sourceSets.main
 			sourceSet sourceSets.client
 		}

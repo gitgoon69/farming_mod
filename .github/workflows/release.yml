@@ -30,9 +30,9 @@ jobs:
           ./gradlew build --no-daemon -Pmc=${{ matrix.mc }}
       - uses: actions/upload-artifact@v4
         with:
-          name: farmingprofit-${{ matrix.mc }}
+          name: fermento-${{ matrix.mc }}
           path: |
-            build/libs/farmingprofit-*.jar
+            build/libs/fermento-*.jar
             !build/libs/*-sources.jar
             !build/libs/*-dev.jar
           if-no-files-found: error
@@ -51,16 +51,16 @@ jobs:
       - name: Release Minecraft 26.1.2 (Latest)
         uses: softprops/action-gh-release@v2
         with:
-          name: Farming Profit ${{ steps.ver.outputs.ver }} — Minecraft 26.1.2
+          name: Fermento ${{ steps.ver.outputs.ver }} — Minecraft 26.1.2
           make_latest: true
           prerelease: false
-          files: dist/farmingprofit-26.1.2/*.jar
+          files: dist/fermento-26.1.2/*.jar
           fail_on_unmatched_files: true
           generate_release_notes: true
           body: |
             ## Download
 
-            **Minecraft 26.1.2 → this file** (`farmingprofit-${{ steps.ver.outputs.ver }}.jar`)
+            **Minecraft 26.1.2 → this file** (`fermento-${{ steps.ver.outputs.ver }}.jar`)
 
             One JAR in `.minecraft/mods/`, with Fabric Loader + Fabric API **26.1.2**.
 
@@ -71,15 +71,15 @@ jobs:
         with:
           tag_name: ${{ github.ref_name }}-26.2
           target_commitish: ${{ github.sha }}
-          name: Farming Profit ${{ steps.ver.outputs.ver }} — Minecraft 26.2
+          name: Fermento ${{ steps.ver.outputs.ver }} — Minecraft 26.2
           make_latest: false
           prerelease: false
-          files: dist/farmingprofit-26.2/*.jar
+          files: dist/fermento-26.2/*.jar
           fail_on_unmatched_files: true
           body: |
             ## Minecraft 26.2 only
 
-            File: `farmingprofit-${{ steps.ver.outputs.ver }}-minecraft-26.2.jar`
+            File: `fermento-${{ steps.ver.outputs.ver }}-minecraft-26.2.jar`
 
             **Do not install this JAR on 26.1.2.** The 26.1.2 build is here (Latest):
             https://github.com/matteorlt/farming_mod/releases/latest

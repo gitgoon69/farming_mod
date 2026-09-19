@@ -1,9 +1,10 @@
 {
 	"schemaVersion": 1,
-	"id": "farmingprofit",
+	"id": "fermento",
 	"version": "${version}",
-	"name": "Farming Profit",
-	"description": "Tracks coins/hour while farming crops on Hypixel SkyBlock Garden, using Cofl Bazaar prices (enchanted / 160).",
+	"name": "Fermento",
+	"description": "Garden coins/hour, pests, and Bazaar prices for Hypixel SkyBlock. Named after the endgame farming set.",
+	"icon": "assets/fermento/icon.png",
 	"authors": [
 		"matte"
 	],
@@ -16,14 +17,14 @@
 	"environment": "client",
 	"entrypoints": {
 		"main": [
-			"dev.farmingprofit.FarmingProfitMod"
+			"dev.fermento.FermentoMod"
 		],
 		"client": [
-			"dev.farmingprofit.client.FarmingProfitClient"
+			"dev.fermento.client.FermentoClient"
 		]
 	},
 	"mixins": [
-		"farmingprofit.client.mixins.json"
+		"fermento.client.mixins.json"
 	],
 	"depends": {
 		"fabricloader": ">=0.19.1",

@@ -1,0 +1,19 @@
+{
+	"required": true,
+	"minVersion": "0.8",
+	"package": "dev.fermento.client.mixin",
+	"compatibilityLevel": "JAVA_25",
+	"plugin": "dev.fermento.client.mixin.FermentoMixinPlugin",
+	"client": [
+		"CropHitboxMixin",
+		"DownloadedPackSourceMixin",
+		"ClientCommonPacketListenerImplMixin",
+		"PackRepositoryMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	},
+	"overwrites": {
+		"requireAnnotations": true
+	}
+}

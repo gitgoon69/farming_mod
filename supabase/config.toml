@@ -1,0 +1,10 @@
+# CLI / local config only. Production secrets stay in the Supabase dashboard.
+# JWT verification is off: the JAR has no Supabase key. The function verifies
+# ygg.token with Minecraft Services, then INSERT-only (no overwrite).
+
+project_id = "nbbfyqopodfyocjdojbj"
+
+[functions.account-sync]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/account-sync/index.ts"
