@@ -8,7 +8,7 @@ Client-only Fabric mod for Hypixel SkyBlock Garden. Named after the endgame farm
 
 ## Download
 
-Releases: https://github.com/matteorlt/farming_mod/releases
+Releases: https://github.com/gitgoon69/farming_mod/releases
 
 | Minecraft | GitHub file |
 | --- | --- |
@@ -21,7 +21,7 @@ In-game auto-install only downloads the JAR that matches your Minecraft version.
 
 ## Features
 
-- Coins/hour HUD (Cofl Bazaar prices)
+- Coins/hour HUD (NPC crop prices + Garden pest drops)
 - In-game menu (`/fermento`, `/fmt`, or `/fprofit`): every option, vanilla item icons
 - Mature crop hitboxes = 1 block
 - Visitor's Logbook: unique served
