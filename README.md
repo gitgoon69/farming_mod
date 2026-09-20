@@ -8,7 +8,7 @@ Client-only Fabric mod for Hypixel SkyBlock Garden. Named after the endgame farm
 
 ## Download
 
-Releases: https://github.com/matteorlt/farming_mod/releases
+Releases: https://github.com/gitgoon69/farming_mod/releases
 
 | Minecraft | GitHub file |
 | --- | --- |
