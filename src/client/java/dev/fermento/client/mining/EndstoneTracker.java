@@ -25,6 +25,8 @@ import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
 /**
@@ -33,6 +35,8 @@ import net.minecraft.world.phys.Vec3;
  * Until a sack message arrives, pace uses Mining Fortune + Block Fortune.
  * Hypixel custom mining does not fire the vanilla break event, so breaks are
  * counted when End Stone near the player turns into air while mining.
+ * The session starts as soon as a pickaxe is swung at End Stone, even if the
+ * scoreboard area name is not "The End".
  */
 public final class EndstoneTracker {
 	private static final long BLOCK_WINDOW_MS = 5_000L;
@@ -86,9 +90,20 @@ public final class EndstoneTracker {
 
 		holdingPickaxe = miningTool(client.player.getMainHandItem());
 		refreshFortune(client, now);
-		scanEndStone(client, now);
+		boolean mining = activelyMining(client);
+		boolean looking = lookingAtEndStone(client);
+		boolean inEnd = GardenDetector.inTheEnd();
+		boolean engaged = inEnd || looking || !nearbyEndStone.isEmpty();
+		if (holdingPickaxe && mining && engaged) {
+			noteActivity(now);
+		}
+		if (engaged) {
+			scanEndStone(client, now, mining);
+		} else {
+			clearScan();
+		}
 
-		if (!holdingPickaxe && (lastActivityMs <= 0 || now - lastActivityMs > HUD_LINGER_MS)) {
+		if (!holdingPickaxe && !sessionLive(now)) {
 			pauseIfIdle(now, config);
 			lastTickMs = now;
 			return;
@@ -113,15 +128,11 @@ public final class EndstoneTracker {
 		countBreak(pos, System.currentTimeMillis());
 	}
 
-	private void scanEndStone(Minecraft client, long now) {
-		if (!GardenDetector.inTheEnd() || client.player == null || client.level == null) {
+	private void scanEndStone(Minecraft client, long now, boolean mining) {
+		if (client.player == null || client.level == null) {
 			clearScan();
 			return;
 		}
-		if (client.options.keyAttack.isDown() || client.player.swinging) {
-			lastMineIntentMs = now;
-		}
-		boolean mining = lastMineIntentMs > 0 && now - lastMineIntentMs <= MINE_INTENT_MS;
 		Set<BlockPos> current = collectEndStone(client);
 		if (scanReady && mining) {
 			Vec3 eye = client.player.getEyePosition();
@@ -207,8 +218,28 @@ public final class EndstoneTracker {
 		scanReady = false;
 	}
 
+	private boolean activelyMining(Minecraft client) {
+		boolean held = client.player != null && (client.options.keyAttack.isDown() || client.player.swinging);
+		boolean breaking = client.gameMode != null && client.gameMode.isDestroying();
+		if (held || breaking) {
+			lastMineIntentMs = System.currentTimeMillis();
+			return true;
+		}
+		return lastMineIntentMs > 0 && System.currentTimeMillis() - lastMineIntentMs <= MINE_INTENT_MS;
+	}
+
+	private boolean lookingAtEndStone(Minecraft client) {
+		if (client.level == null || !(client.hitResult instanceof BlockHitResult hit)) {
+			return false;
+		}
+		if (hit.getType() != HitResult.Type.BLOCK) {
+			return false;
+		}
+		return client.level.getBlockState(hit.getBlockPos()).is(Blocks.END_STONE);
+	}
+
 	public void onChat(Component message) {
-		if (!tracking || message == null || !sessionLive(System.currentTimeMillis())) {
+		if (!tracking || message == null) {
 			return;
 		}
 		String visible = clean(message.getString());
@@ -246,7 +277,10 @@ public final class EndstoneTracker {
 		if (Crop.isFarmingTool(SkyblockItems.skyblockId(client.player.getMainHandItem()))) {
 			return false;
 		}
-		return GardenDetector.inTheEnd();
+		if (GardenDetector.inTheEnd() || sessionLive(System.currentTimeMillis())) {
+			return true;
+		}
+		return miningTool(client.player.getMainHandItem()) && lookingAtEndStone(client);
 	}
 
 	public void reset() {

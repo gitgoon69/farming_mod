@@ -1,5 +1,7 @@
 package dev.fermento.client.garden;
 
+import java.util.Locale;
+
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -119,12 +121,19 @@ public final class GardenDetector {
 		if (stripped == null) {
 			stripped = text;
 		}
-		return stripped.contains("The End")
-				|| stripped.contains("Dragon's Nest")
-				|| stripped.contains("Dragons Nest")
-				|| stripped.contains("Void Sepulture")
-				|| stripped.contains("Void Slate")
-				|| stripped.contains("Endstone Protector");
+		String lower = stripped
+				.replace('\u2019', '\'')
+				.replace('\u2018', '\'')
+				.toLowerCase(Locale.ROOT);
+		return lower.contains("the end")
+				|| lower.contains("dragon's nest")
+				|| lower.contains("dragons nest")
+				|| lower.contains("void sepulture")
+				|| lower.contains("void sepulchre")
+				|| lower.contains("void slate")
+				|| lower.contains("endstone protector")
+				|| lower.contains("end stone protector")
+				|| lower.contains("zealot bruiser");
 	}
 
 	private static boolean isConnectedToHypixel(Minecraft client) {
