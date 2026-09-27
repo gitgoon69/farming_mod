@@ -113,7 +113,7 @@ While a **pickaxe / drill** is in hand and you mine **End Stone**, the same coin
 
 Profit follows SkyHanni's gemstone coins/hour: items that land in **sacks** (hover on the `[Sacks]` chat line), priced at **the better of NPC and bazaar**. End Stone NPC is 2 coins; Enchanted End Stone is 160 stones. Sell offer uses the bazaar when it beats NPC (instant sell usually does not). **Mite Gel** from that session is added the same way.
 
-Until a sack message arrives, coins/hour is a pace: blocks you break × `(1 + (Mining Fortune + Block Fortune) / 100)`. Fortune is read from the action bar and the tab stats. That pace does not include Mining Spread; the sack total does.
+Until a sack message arrives, coins/hour is a pace: blocks you break × `(1 + (Mining Fortune + Block Fortune) / 100)`. Fortune is read from the tab stats. That pace does not include Mining Spread; the sack total does.
 
 `/fermento mode OFFER|INSTANT` applies to End Stone and pest loot. Crops stay NPC. `/fermento reset` clears both sessions.
 

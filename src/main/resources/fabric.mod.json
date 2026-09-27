@@ -26,7 +26,6 @@
 	"mixins": [
 		"fermento.client.mixins.json"
 	],
-	"accessWidener": "fermento.accesswidener",
 	"depends": {
 		"fabricloader": ">=0.19.1",
 		"minecraft": "${minecraft}",

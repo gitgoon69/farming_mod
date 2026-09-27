@@ -146,7 +146,7 @@ public final class ProfitHud {
 
 		MiningFortune.Reading fortune = snap.fortune();
 		if (!fortune.known()) {
-			lines.add("Fortune: action bar");
+			lines.add("Fortune: tab stats");
 		} else if (fortune.blockKnown() && fortune.block() > 0) {
 			lines.add("Fortune: " + formatCount(fortune.mining()) + "+" + formatCount(fortune.block()));
 		} else {

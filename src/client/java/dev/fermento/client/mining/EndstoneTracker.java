@@ -220,7 +220,7 @@ public final class EndstoneTracker {
 	}
 
 	private void refreshFortune(Minecraft client, long now) {
-		MiningFortune.Reading read = MiningFortune.read(ActionBarText.current(client), TabList.lines(client));
+		MiningFortune.Reading read = MiningFortune.read("", TabList.lines(client));
 		if (read.known()) {
 			boolean keepBlock = !read.blockKnown() && fortune.blockKnown() && now - fortuneAt < FORTUNE_HOLD_MS;
 			fortune = keepBlock ? read.mergeMissing(fortune) : read;
