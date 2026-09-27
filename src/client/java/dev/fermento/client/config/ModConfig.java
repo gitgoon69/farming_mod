@@ -48,6 +48,8 @@ public final class ModConfig {
 	public boolean hideServerResourcePack = true;
 	/** Mining: auto right-click when pickaxe ability is ready (cooldown at 0). */
 	public boolean autoPickaxeAbility = true;
+	/** Coins/hour while mining End Stone (sack loot, else fortune estimate). */
+	public boolean endstoneProfit = true;
 
 	public static ModConfig load() {
 		Path source = Files.exists(PATH) ? PATH : (Files.exists(LEGACY_PATH) ? LEGACY_PATH : null);

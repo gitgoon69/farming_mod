@@ -17,6 +17,7 @@ import dev.fermento.client.config.ModConfig;
 import dev.fermento.client.garden.FarmingTracker;
 import dev.fermento.client.hud.HudMoveScreen;
 import dev.fermento.client.loadout.PestLoadoutService;
+import dev.fermento.client.mining.EndstoneTracker;
 import dev.fermento.client.mining.PickaxeAbilityService;
 import dev.fermento.client.prices.CoflBazaarService;
 import dev.fermento.client.update.UpdateChecker;
@@ -46,6 +47,7 @@ public final class SettingsScreen extends Screen {
 
 	private final ModConfig config;
 	private final FarmingTracker tracker;
+	private final EndstoneTracker endstone;
 	private final CoflBazaarService prices;
 	private final PestLoadoutService pest;
 	private final PickaxeAbilityService pickaxe;
@@ -70,6 +72,7 @@ public final class SettingsScreen extends Screen {
 	public SettingsScreen(
 			ModConfig config,
 			FarmingTracker tracker,
+			EndstoneTracker endstone,
 			CoflBazaarService prices,
 			PestLoadoutService pest,
 			PickaxeAbilityService pickaxe,
@@ -78,6 +81,7 @@ public final class SettingsScreen extends Screen {
 		super(Component.literal("Fermento"));
 		this.config = config;
 		this.tracker = tracker;
+		this.endstone = endstone;
 		this.prices = prices;
 		this.pest = pest;
 		this.pickaxe = pickaxe;
@@ -325,17 +329,17 @@ public final class SettingsScreen extends Screen {
 		List<Row> rows = new ArrayList<>();
 		switch (tab) {
 			case 0 -> {
-				rows.add(toggle("Coins / hour HUD", "Shows the overlay when a crop hoe is in hand", Items.GOLDEN_HOE,
+				rows.add(toggle("Coins / hour HUD", "Crop hoe, or a pickaxe while mining End Stone", Items.GOLDEN_HOE,
 						() -> config.hudEnabled, () -> {
 							config.hudEnabled = !config.hudEnabled;
 							config.save();
 							ping(config.hudEnabled ? "HUD on" : "HUD hidden");
 						}));
-				rows.add(cycle("Pest Bazaar", "OFFER / INSTANT for Dung, Compost… Crops stay NPC", Items.GOLD_INGOT,
+				rows.add(cycle("Bazaar mode", "OFFER / INSTANT for pests and End Stone. Crops stay NPC", Items.GOLD_INGOT,
 						() -> config.useSellOffer() ? "OFFER" : "INSTANT", () -> {
 							config.priceMode = config.useSellOffer() ? "INSTANT" : "OFFER";
 							config.save();
-							ping("Pest prices: " + config.priceMode);
+							ping("Prices: " + config.priceMode);
 						}));
 				rows.add(toggle("Count seeds", "Adds NPC seed price to the wheat mix", Items.WHEAT_SEEDS,
 						() -> config.includeSeeds, () -> {
@@ -351,6 +355,7 @@ public final class SettingsScreen extends Screen {
 				rows.add(action("Move HUD", "Drag the overlay with the mouse", Items.PAPER, this::openMove));
 				rows.add(action("Reset session", "Clears counter, time and profit", Items.CLOCK, () -> {
 					tracker.resetSession();
+					endstone.reset();
 					ping("Session reset");
 				}));
 				rows.add(action("Refresh Cofl", "Reload bazaar API", Items.ENDER_CHEST, () -> {
@@ -395,6 +400,15 @@ public final class SettingsScreen extends Screen {
 				}));
 			}
 			case 3 -> {
+				rows.add(toggle("End Stone profit", "Coins/hour from sacks, or fortune until they update", Items.END_STONE,
+						() -> config.endstoneProfit, () -> {
+							config.endstoneProfit = !config.endstoneProfit;
+							if (!config.endstoneProfit) {
+								endstone.reset();
+							}
+							config.save();
+							ping(config.endstoneProfit ? "End Stone profit on" : "End Stone profit off");
+						}));
 				rows.add(toggle("Auto pickaxe ability", "Right-click when mining cooldown hits 0", Items.IRON_PICKAXE,
 						() -> config.autoPickaxeAbility, () -> {
 							config.autoPickaxeAbility = !config.autoPickaxeAbility;
@@ -599,7 +613,7 @@ public final class SettingsScreen extends Screen {
 		HUD("HUD", "Coins / hour overlay", Items.GOLDEN_HOE),
 		GARDEN("Farm", "Hitbox and AFK", Items.WHEAT),
 		PEST("Pest", "Loadout and 2m50 alert", Items.FISHING_ROD),
-		MINING("Mine", "Pickaxe ability", Items.IRON_PICKAXE),
+		MINING("Mine", "End Stone profit, pickaxe", Items.IRON_PICKAXE),
 		SYSTEM("Sys", "Pack, updates, account, NPC sell", Items.NETHER_STAR);
 
 		final String label;

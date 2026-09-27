@@ -21,7 +21,7 @@ In-game auto-install only downloads the JAR that matches your Minecraft version.
 
 ## Features
 
-- Coins/hour HUD (NPC crop prices + Garden pest drops)
+- Coins/hour HUD (NPC crop prices + Garden pest drops, and End Stone mining)
 - In-game menu (`/fermento`, `/fmt`, or `/fprofit`): every option, vanilla item icons
 - Mature crop hitboxes = 1 block
 - Visitor's Logbook: unique served
@@ -44,7 +44,7 @@ Java 25 required.
 ./gradlew.bat build "-Pmc=26.2"
 ```
 
-JAR: `build/libs/fermento-1.0.20.jar` (26.1.2) and `fermento-1.0.20-minecraft-26.2.jar` (26.2)
+JAR: `build/libs/fermento-1.0.21.jar` (26.1.2) and `fermento-1.0.21-minecraft-26.2.jar` (26.2)
 
 ## Updates
 

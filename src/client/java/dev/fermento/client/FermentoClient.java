@@ -26,6 +26,7 @@ import dev.fermento.client.hud.PestCooldownAlertHud;
 import dev.fermento.client.hud.PestModeHud;
 import dev.fermento.client.hud.ProfitHud;
 import dev.fermento.client.loadout.PestLoadoutService;
+import dev.fermento.client.mining.EndstoneTracker;
 import dev.fermento.client.mining.PickaxeAbilityService;
 import dev.fermento.client.prices.CoflBazaarService;
 import dev.fermento.client.sell.NpcSellService;
@@ -52,6 +53,7 @@ import org.lwjgl.glfw.GLFW;
 public class FermentoClient implements ClientModInitializer {
 	private static ModConfig config;
 	private static FarmingTracker tracker;
+	private static EndstoneTracker endstone;
 	private static CoflBazaarService prices;
 	private static NpcSellService npcSell;
 	private static PestLoadoutService pestLoadout;
@@ -66,6 +68,7 @@ public class FermentoClient implements ClientModInitializer {
 	public void onInitializeClient() {
 		config = ModConfig.load();
 		tracker = new FarmingTracker();
+		endstone = new EndstoneTracker();
 		prices = new CoflBazaarService();
 		prices.start();
 		npcSell = new NpcSellService();
@@ -86,7 +89,7 @@ public class FermentoClient implements ClientModInitializer {
 		HudElementRegistry.attachElementBefore(
 				VanillaHudElements.CHAT,
 				FermentoMod.id("profit_hud"),
-				(graphics, delta) -> ProfitHud.render(graphics, delta, config, tracker, prices)
+				(graphics, delta) -> ProfitHud.render(graphics, delta, config, tracker, endstone, prices)
 		);
 		HudElementRegistry.attachElementBefore(
 				VanillaHudElements.CHAT,
@@ -119,6 +122,7 @@ public class FermentoClient implements ClientModInitializer {
 			}
 			GardenDetector.tick(client);
 			tracker.tick(client, config);
+			endstone.tick(client, config);
 			prices.tick();
 			npcSell.tick(client);
 			VisitorLogbookStats.tick(client);
@@ -138,6 +142,7 @@ public class FermentoClient implements ClientModInitializer {
 			if (crop != null) {
 				tracker.onBlockBroken(crop);
 			}
+			endstone.onBlockBroken(state.getBlock());
 		});
 
 		ClientReceiveMessageEvents.GAME.register((message, overlay) -> {
@@ -145,6 +150,7 @@ public class FermentoClient implements ClientModInitializer {
 			if (!overlay) {
 				pestLoadout.onChat(text);
 				tracker.onChat(text);
+				endstone.onChat(message);
 			}
 			pickaxeAbility.onChat(text);
 		});
@@ -161,6 +167,7 @@ public class FermentoClient implements ClientModInitializer {
 		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
 			GardenDetector.reset();
 			tracker.resetSession();
+			endstone.reset();
 			VisitorLogbookStats.reset();
 			pestLoadout.resetSession();
 			pickaxeAbility.reset();
@@ -185,7 +192,19 @@ public class FermentoClient implements ClientModInitializer {
 						.then(literal("menu").executes(FermentoClient::openSettings))
 						.then(literal("reset").executes(ctx -> {
 							tracker.resetSession();
+							endstone.reset();
 							feedback(ctx, "Session reset.");
+							return 1;
+						}))
+						.then(literal("endstone").executes(ctx -> {
+							config.endstoneProfit = !config.endstoneProfit;
+							config.save();
+							if (!config.endstoneProfit) {
+								endstone.reset();
+							}
+							feedback(ctx, config.endstoneProfit
+									? "End Stone profit: ON (sacks, else fortune)."
+									: "End Stone profit: OFF.");
 							return 1;
 						}))
 						.then(literal("toggle").executes(ctx -> {
@@ -330,7 +349,7 @@ public class FermentoClient implements ClientModInitializer {
 
 	public static void openMenu(Minecraft client) {
 		client.execute(() -> ClientScreens.set(client, new SettingsScreen(
-				config, tracker, prices, pestLoadout, pickaxeAbility, updates)));
+				config, tracker, endstone, prices, pestLoadout, pickaxeAbility, updates)));
 	}
 
 	private static int openMoveScreen(CommandContext<FabricClientCommandSource> ctx) {
@@ -341,7 +360,7 @@ public class FermentoClient implements ClientModInitializer {
 	}
 
 	private static int help(CommandContext<FabricClientCommandSource> ctx) {
-		ctx.getSource().sendFeedback(Component.literal("Fermento — /fermento (menu) | menu | sell <item> [times] | pest | pestauto | pestalert | pickaxe | serverpack | update [install] | sell cancel | move [x y|reset] | reset | toggle | hitbox | prices | mode <OFFER|INSTANT>").withStyle(ChatFormatting.GOLD));
+		ctx.getSource().sendFeedback(Component.literal("Fermento — /fermento (menu) | menu | sell <item> [times] | pest | pestauto | pestalert | pickaxe | endstone | serverpack | update [install] | sell cancel | move [x y|reset] | reset | toggle | hitbox | prices | mode <OFFER|INSTANT>").withStyle(ChatFormatting.GOLD));
 		return 1;
 	}
 

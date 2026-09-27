@@ -70,6 +70,9 @@ mod farming/
         │   ├── loadout/
         │   │   └── PestLoadoutService.java
         │   ├── mining/
+        │   │   ├── ActionBarText.java
+        │   │   ├── EndstoneTracker.java
+        │   │   ├── MiningFortune.java
         │   │   └── PickaxeAbilityService.java
         │   ├── sell/
         │   │   └── NpcSellService.java

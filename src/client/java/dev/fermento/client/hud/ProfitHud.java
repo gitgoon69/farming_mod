@@ -10,6 +10,8 @@ import dev.fermento.client.garden.Crop;
 import dev.fermento.client.garden.FarmingTracker;
 import dev.fermento.client.garden.SkyblockItems;
 import dev.fermento.client.gui.SettingsScreen;
+import dev.fermento.client.mining.EndstoneTracker;
+import dev.fermento.client.mining.MiningFortune;
 import dev.fermento.client.prices.CoflBazaarService;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
@@ -32,12 +34,17 @@ public final class ProfitHud {
 		return lastBounds;
 	}
 
-	public static void render(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker, ModConfig config, FarmingTracker tracker, CoflBazaarService prices) {
-		render(graphics, config, tracker, prices, false);
+	public static void render(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker, ModConfig config, FarmingTracker tracker, EndstoneTracker endstone, CoflBazaarService prices) {
+		render(graphics, config, tracker, endstone, prices, false);
 	}
 
 	public static void render(GuiGraphicsExtractor graphics, ModConfig config, FarmingTracker tracker, CoflBazaarService prices, boolean force) {
+		render(graphics, config, tracker, null, prices, force);
+	}
+
+	public static void render(GuiGraphicsExtractor graphics, ModConfig config, FarmingTracker tracker, EndstoneTracker endstone, CoflBazaarService prices, boolean force) {
 		Minecraft client = Minecraft.getInstance();
+		boolean endstoneHud = false;
 		if (!force) {
 			if (ClientHudHidden.hidden(client) || SettingsScreen.blockingHud(client)) {
 				return;
@@ -45,14 +52,17 @@ public final class ProfitHud {
 			if (!config.hudEnabled || client.player == null) {
 				return;
 			}
-			if (!Crop.isFarmingTool(SkyblockItems.skyblockId(client.player.getMainHandItem()))) {
+			boolean farming = Crop.isFarmingTool(SkyblockItems.skyblockId(client.player.getMainHandItem()));
+			endstoneHud = !farming && endstone != null && endstone.hudVisible(client, config);
+			if (!farming && !endstoneHud) {
 				return;
 			}
 		}
 
-		FarmingTracker.Snapshot snap = tracker.snapshot(config, prices);
 		Font font = client.font;
-		List<String> lines = buildLines(snap);
+		List<String> lines = endstoneHud
+				? buildEndstoneLines(endstone.snapshot(config, prices))
+				: buildLines(tracker.snapshot(config, prices));
 
 		int pad = 4;
 		int lineH = 10;
@@ -75,7 +85,7 @@ public final class ProfitHud {
 			if (lines.get(i).contains("coins/h") || lines.get(i).startsWith("Session")) {
 				color = GOLD;
 			}
-			if (snap.paused() && lines.get(i).contains("AFK")) {
+			if (lines.get(i).contains("AFK")) {
 				color = MUTED;
 			}
 			graphics.text(font, lines.get(i), x, drawY, color, true);
@@ -126,6 +136,55 @@ public final class ProfitHud {
 			lines.add(formatCoins(snap.unitPrice()) + "/crop  NPC");
 		}
 		return lines;
+	}
+
+	private static List<String> buildEndstoneLines(EndstoneTracker.Snapshot snap) {
+		List<String> lines = new ArrayList<>();
+		lines.add("Fermento");
+		lines.add("End Stone" + (snap.paused() ? "  (AFK)" : ""));
+		lines.add("Blocks/s: " + String.format(Locale.US, "%.1f", snap.blocksPerSecond()));
+
+		MiningFortune.Reading fortune = snap.fortune();
+		if (!fortune.known()) {
+			lines.add("Fortune: action bar");
+		} else if (fortune.blockKnown() && fortune.block() > 0) {
+			lines.add("Fortune: " + formatCount(fortune.mining()) + "+" + formatCount(fortune.block()));
+		} else {
+			lines.add("Fortune: " + formatCount(fortune.total()));
+		}
+
+		if (snap.unitPrice() <= 0) {
+			lines.add("Price missing");
+			return lines;
+		}
+
+		String priceTag = priceTag(snap);
+		if (snap.coinsPerHour() > 0) {
+			String via = snap.rateSource().isEmpty() ? priceTag : snap.rateSource();
+			lines.add("Coins/h: " + formatCoins(snap.coinsPerHour()) + "  (" + via + ")");
+		} else {
+			lines.add("Coins/h: breaking…");
+		}
+		if (snap.miteGel() > 0) {
+			lines.add("Mite gel: " + formatCount(Math.round(snap.miteGel()))
+					+ "  +" + formatCoins(snap.miteGelCoins()));
+		}
+		lines.add("Stones: " + formatCount(Math.round(snap.stones()))
+				+ (snap.fromSacks() ? "" : "  est."));
+		lines.add("Session: " + formatCoins(snap.sessionProfit())
+				+ "  |  " + formatDuration(snap.activeMs()));
+		if (snap.sessionCoinsPerHour() > 0) {
+			lines.add("Session/h: " + formatCoins(snap.sessionCoinsPerHour()));
+		}
+		lines.add(formatCoins(snap.unitPrice()) + "/stone  " + priceTag);
+		return lines;
+	}
+
+	private static String priceTag(EndstoneTracker.Snapshot snap) {
+		if (!snap.bazaar()) {
+			return "NPC";
+		}
+		return snap.sellOffer() ? "BZ offer" : "BZ instant";
 	}
 
 	public static String formatCoins(double value) {

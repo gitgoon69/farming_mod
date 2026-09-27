@@ -20,7 +20,7 @@ Every option (HUD, hitbox, pest, pickaxe, pack, updates) lives in one screen, wi
 
 ## HUD (coins / hour)
 
-The HUD shows when a **farming tool** is in hand. The crop comes from the broken block, otherwise from the tool.
+The HUD shows when a **farming tool** is in hand, or when a **pickaxe** is mining **End Stone**. The crop comes from the broken block, otherwise from the tool.
 
 | Command | Description |
 | --- | --- |
@@ -106,6 +106,20 @@ When pickaxe ability cooldown hits **0** (item overlay / chat *You used your …
 | Command | Description |
 | --- | --- |
 | `/fermento pickaxe` | Enable or disable (default: ON) |
+
+## End Stone profit
+
+While a **pickaxe / drill** is in hand and you mine **End Stone**, the same coins/hour HUD switches to End Stone.
+
+Profit follows SkyHanni's gemstone coins/hour: items that land in **sacks** (hover on the `[Sacks]` chat line), priced at **the better of NPC and bazaar**. End Stone NPC is 2 coins; Enchanted End Stone is 160 stones. Sell offer uses the bazaar when it beats NPC (instant sell usually does not). **Mite Gel** from that session is added the same way.
+
+Until a sack message arrives, coins/hour is a pace: blocks you break × `(1 + (Mining Fortune + Block Fortune) / 100)`. Fortune is read from the action bar and the tab stats. That pace does not include Mining Spread; the sack total does.
+
+`/fermento mode OFFER|INSTANT` applies to End Stone and pest loot. Crops stay NPC. `/fermento reset` clears both sessions.
+
+| Command | Description |
+| --- | --- |
+| `/fermento endstone` | Enable or disable End Stone profit (default: ON) |
 
 ## Hypixel server pack
 

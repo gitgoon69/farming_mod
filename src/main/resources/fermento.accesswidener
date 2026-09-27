@@ -1,0 +1,4 @@
+accessWidener v2 official
+
+accessible field net/minecraft/client/gui/Gui overlayMessageString Lnet/minecraft/network/chat/Component;
+accessible field net/minecraft/client/gui/Gui overlayMessageTime I
