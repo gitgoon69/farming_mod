@@ -144,6 +144,7 @@ public class FermentoClient implements ClientModInitializer {
 			String text = message.getString();
 			if (!overlay) {
 				pestLoadout.onChat(text);
+				tracker.onChat(text);
 			}
 			pickaxeAbility.onChat(text);
 		});

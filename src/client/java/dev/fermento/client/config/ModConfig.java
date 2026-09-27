@@ -23,6 +23,8 @@ public final class ModConfig {
 	/** OFFER = sell offer (buyPrice Cofl), INSTANT = instant sell (sellPrice Cofl). */
 	public String priceMode = "OFFER";
 	public boolean includeSeeds = true;
+	/** Add Garden pest loot (chat drops + kill coins) to coins/hour. */
+	public boolean includePestDrops = true;
 	public int afkTimeoutSeconds = 15;
 	/** Aim hitbox: 1×1×1 cube when mature, lowest otherwise (wheat, carrots, potatoes, nether wart, mushrooms, cocoa). */
 	public boolean fullCropHitboxes = true;

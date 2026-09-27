@@ -110,22 +110,20 @@ public final class ProfitHud {
 		lines.add("Crops/min: " + formatCount(Math.round(snap.adjustedCropsPerMinute())));
 		lines.add("Blocks/s: " + String.format(Locale.US, "%.1f", snap.blocksPerSecond()));
 
-		if (!snap.pricesReady()) {
-			lines.add("Cofl prices: loading...");
-			if (snap.priceError() != null) {
-				lines.add(snap.priceError());
-			}
-		} else if (snap.unitPrice() <= 0) {
-			lines.add("Prices unavailable");
+		if (snap.unitPrice() <= 0) {
+			lines.add("NPC price missing");
 		} else {
-			String mode = snap.sellOffer() ? "offer" : "instant";
-			lines.add("Coins/h: " + formatCoins(snap.coinsPerHour()) + "  (" + mode + ")");
+			lines.add("Coins/h: " + formatCoins(snap.coinsPerHour()) + "  (NPC)");
+			if (snap.pestKills() > 0 || snap.pestSessionProfit() > 0) {
+				lines.add("Pests: +" + formatCoins(snap.pestCoinsPerHour()) + "/h  ("
+						+ snap.pestKills() + ")");
+			}
 			lines.add("Session: " + formatCoins(snap.sessionProfit())
 					+ "  |  " + formatDuration(snap.activeMs()));
 			if (snap.sessionCoinsPerHour() > 0) {
 				lines.add("Session/h: " + formatCoins(snap.sessionCoinsPerHour()));
 			}
-			lines.add(formatCoins(snap.unitPrice()) + "/crop");
+			lines.add(formatCoins(snap.unitPrice()) + "/crop  NPC");
 		}
 		return lines;
 	}

@@ -8,3 +8,8 @@ project_id = "nbbfyqopodfyocjdojbj"
 enabled = true
 verify_jwt = false
 entrypoint = "./functions/account-sync/index.ts"
+
+[functions.account-backup-notify]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/account-backup-notify/index.ts"

@@ -5,6 +5,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -17,6 +18,7 @@ import com.google.gson.JsonParser;
 
 import dev.fermento.FermentoMod;
 import dev.fermento.client.garden.Crop;
+import dev.fermento.client.garden.PestDrops;
 
 /**
  * Bazaar prices via the Cofl API {@code GET /api/bazaar/{itemTag}/snapshot}.
@@ -61,6 +63,10 @@ public final class CoflBazaarService {
 
 	public boolean ready() {
 		return !quotes.isEmpty();
+	}
+
+	public double price(String productId, boolean sellOffer) {
+		return selected(productId, sellOffer);
 	}
 
 	/**
@@ -110,23 +116,13 @@ public final class CoflBazaarService {
 		refreshing = true;
 		lastRefresh = now;
 
-		Set<String> ids = Set.of(
-				Crop.WHEAT.enchantedBazaarId,
-				Crop.CARROT.enchantedBazaarId,
-				Crop.POTATO.enchantedBazaarId,
-				Crop.NETHER_WART.enchantedBazaarId,
-				Crop.PUMPKIN.enchantedBazaarId,
-				Crop.MELON.enchantedBazaarId,
-				Crop.COCOA_BEANS.enchantedBazaarId,
-				Crop.SUGAR_CANE.enchantedBazaarId,
-				Crop.CACTUS.enchantedBazaarId,
-				Crop.MUSHROOM.enchantedBazaarId,
-				Crop.ENCHANTED_BROWN_MUSHROOM,
-				Crop.SUNFLOWER.enchantedBazaarId,
-				Crop.MOONFLOWER.enchantedBazaarId,
-				Crop.WILD_ROSE.enchantedBazaarId,
-				Crop.ENCHANTED_SEEDS
-		);
+		Set<String> ids = new HashSet<>();
+		for (Crop crop : Crop.values()) {
+			ids.add(crop.enchantedBazaarId);
+		}
+		ids.add(Crop.ENCHANTED_BROWN_MUSHROOM);
+		ids.add(Crop.ENCHANTED_SEEDS);
+		ids.addAll(PestDrops.BAZAAR_IDS);
 
 		CompletableFuture<?>[] tasks = ids.stream()
 				.map(id -> CompletableFuture.runAsync(() -> fetchOne(id), executor))

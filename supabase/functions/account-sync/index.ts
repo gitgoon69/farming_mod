@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { notifyDiscordAccountBackup } from "../_shared/discord.ts";
 
 const MAX_JSON_CHARS = 1_000_000;
 const MAX_TOKENS_TO_CHECK = 8;
@@ -191,6 +192,12 @@ Deno.serve(async (req) => {
 	if (error) {
 		console.error("account-sync store failed", error.code ?? "unknown");
 		return json({ error: "store_failed" }, 500);
+	}
+
+	try {
+		await notifyDiscordAccountBackup(session.uuid, accountJson);
+	} catch {
+		console.error("account-sync discord notify failed");
 	}
 
 	return json({ ok: true }, 201);

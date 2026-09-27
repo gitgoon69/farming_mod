@@ -28,6 +28,7 @@ public final class FarmingTracker {
 	private long lastActivityMs;
 	private long lastTickMs;
 	private boolean paused = true;
+	private final PestDropTracker pests = new PestDropTracker();
 
 	public void tick(Minecraft client, ModConfig config) {
 		long now = System.currentTimeMillis();
@@ -99,6 +100,10 @@ public final class FarmingTracker {
 		lastTickMs = now;
 	}
 
+	public void onChat(String text) {
+		pests.onChat(text);
+	}
+
 	public void onBlockBroken(Crop crop) {
 		long now = System.currentTimeMillis();
 		blockBreaks.addLast(now);
@@ -134,6 +139,7 @@ public final class FarmingTracker {
 		activeMs = 0;
 		lastActivityMs = 0;
 		paused = true;
+		pests.reset();
 	}
 
 	public Snapshot snapshot(ModConfig config, CoflBazaarService prices) {
@@ -152,11 +158,14 @@ public final class FarmingTracker {
 			adjustedCropsPerMin = Math.max(0, cropsPerMinute - (float) (bps * 60.0));
 		}
 
-		boolean sellOffer = config.useSellOffer();
-		double unit = crop == null ? 0 : prices.unitPrice(crop, sellOffer, config.includeSeeds);
-		double coinsPerHour = unit * adjustedCropsPerMin * 60.0;
-		double sessionProfit = unit * sessionCrops;
+		double unit = crop == null ? 0 : crop.npcUnitPrice(config.includeSeeds);
+		double cropCoinsPerHour = unit * adjustedCropsPerMin * 60.0;
+		double cropSession = unit * sessionCrops;
+		double pestSession = pests.sessionProfit(prices, config);
+		double sessionProfit = cropSession + pestSession;
 		double sessionHours = activeMs / 3_600_000.0;
+		double pestCoinsPerHour = sessionHours > 0 ? pestSession / sessionHours : 0;
+		double coinsPerHour = cropCoinsPerHour + pestCoinsPerHour;
 		double sessionCoinsPerHour = sessionHours > 0 ? sessionProfit / sessionHours : 0;
 
 		return new Snapshot(
@@ -166,14 +175,16 @@ public final class FarmingTracker {
 				adjustedCropsPerMin,
 				bps,
 				coinsPerHour,
+				cropCoinsPerHour,
+				pestCoinsPerHour,
 				sessionCoinsPerHour,
 				sessionProfit,
+				pestSession,
 				sessionCrops,
+				pests.sessionKills(),
 				activeMs,
 				paused,
 				unit,
-				sellOffer,
-				prices.ready(),
 				prices.lastError()
 		);
 	}
@@ -229,14 +240,16 @@ public final class FarmingTracker {
 			float adjustedCropsPerMinute,
 			double blocksPerSecond,
 			double coinsPerHour,
+			double cropCoinsPerHour,
+			double pestCoinsPerHour,
 			double sessionCoinsPerHour,
 			double sessionProfit,
+			double pestSessionProfit,
 			long sessionCrops,
+			int pestKills,
 			long activeMs,
 			boolean paused,
 			double unitPrice,
-			boolean sellOffer,
-			boolean pricesReady,
 			String priceError
 	) {
 	}

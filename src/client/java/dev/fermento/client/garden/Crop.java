@@ -14,23 +14,25 @@ import net.minecraft.world.level.block.Blocks;
  * 1 enchanted = 160 normal items, so price/crop = enchanted price / 160.
  */
 public enum Crop {
-	WHEAT("Wheat", "WHEAT", "ENCHANTED_WHEAT", false),
-	CARROT("Carrot", "CARROT_ITEM", "ENCHANTED_CARROT", true),
-	POTATO("Potato", "POTATO_ITEM", "ENCHANTED_POTATO", true),
-	NETHER_WART("Nether Wart", "NETHER_STALK", "ENCHANTED_NETHER_STALK", true),
-	PUMPKIN("Pumpkin", "PUMPKIN", "ENCHANTED_PUMPKIN", false),
-	MELON("Melon", "MELON", "ENCHANTED_MELON", false),
-	COCOA_BEANS("Cocoa Beans", "INK_SACK:3", "ENCHANTED_COCOA", true),
-	SUGAR_CANE("Sugar Cane", "SUGAR_CANE", "ENCHANTED_SUGAR", false),
-	CACTUS("Cactus", "CACTUS", "ENCHANTED_CACTUS_GREEN", false),
-	MUSHROOM("Mushroom", "RED_MUSHROOM", "ENCHANTED_RED_MUSHROOM", false),
-	SUNFLOWER("Sunflower", "DOUBLE_PLANT", "ENCHANTED_SUNFLOWER", true),
-	MOONFLOWER("Moonflower", "MOONFLOWER", "ENCHANTED_MOONFLOWER", true),
-	WILD_ROSE("Wild Rose", "WILD_ROSE", "ENCHANTED_WILD_ROSE", true);
+	WHEAT("Wheat", "WHEAT", "ENCHANTED_WHEAT", false, 6),
+	CARROT("Carrot", "CARROT_ITEM", "ENCHANTED_CARROT", true, 3),
+	POTATO("Potato", "POTATO_ITEM", "ENCHANTED_POTATO", true, 3),
+	NETHER_WART("Nether Wart", "NETHER_STALK", "ENCHANTED_NETHER_STALK", true, 4),
+	PUMPKIN("Pumpkin", "PUMPKIN", "ENCHANTED_PUMPKIN", false, 10),
+	MELON("Melon", "MELON", "ENCHANTED_MELON", false, 2),
+	COCOA_BEANS("Cocoa Beans", "INK_SACK:3", "ENCHANTED_COCOA", true, 3),
+	SUGAR_CANE("Sugar Cane", "SUGAR_CANE", "ENCHANTED_SUGAR", false, 4),
+	CACTUS("Cactus", "CACTUS", "ENCHANTED_CACTUS_GREEN", false, 4),
+	MUSHROOM("Mushroom", "RED_MUSHROOM", "ENCHANTED_RED_MUSHROOM", false, 10),
+	SUNFLOWER("Sunflower", "DOUBLE_PLANT", "ENCHANTED_SUNFLOWER", true, 4),
+	MOONFLOWER("Moonflower", "MOONFLOWER", "ENCHANTED_MOONFLOWER", true, 4),
+	WILD_ROSE("Wild Rose", "WILD_ROSE", "ENCHANTED_WILD_ROSE", true, 4);
 
 	public static final String ENCHANTED_SEEDS = "ENCHANTED_SEEDS";
 	public static final String ENCHANTED_BROWN_MUSHROOM = "ENCHANTED_BROWN_MUSHROOM";
 	public static final int ENCHANTED_RATIO = 160;
+	/** NPC sell price of seeds (wheat counter mix). */
+	public static final double NPC_SEEDS = 3;
 
 	private static final Map<String, Crop> BY_TOOL = new HashMap<>();
 	private static final Set<String> GENERIC_TOOLS = Set.of(
@@ -60,12 +62,25 @@ public enum Crop {
 	public final String hypixelItemId;
 	public final String enchantedBazaarId;
 	public final boolean replenishCrop;
+	/** NPC sell price of one harvested item. */
+	public final double npcPrice;
 
-	Crop(String displayName, String hypixelItemId, String enchantedBazaarId, boolean replenishCrop) {
+	Crop(String displayName, String hypixelItemId, String enchantedBazaarId, boolean replenishCrop, double npcPrice) {
 		this.displayName = displayName;
 		this.hypixelItemId = hypixelItemId;
 		this.enchantedBazaarId = enchantedBazaarId;
 		this.replenishCrop = replenishCrop;
+		this.npcPrice = npcPrice;
+	}
+
+	/**
+	 * Coins per Cultivating increment at NPC. Wheat + seeds uses the ~40/60 mix.
+	 */
+	public double npcUnitPrice(boolean includeSeeds) {
+		if (this == WHEAT && includeSeeds) {
+			return npcPrice * 0.4 + NPC_SEEDS * 0.6;
+		}
+		return npcPrice;
 	}
 
 	private static void bindTools(String baseId, Crop crop) {

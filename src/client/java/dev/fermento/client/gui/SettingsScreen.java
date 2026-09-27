@@ -331,16 +331,22 @@ public final class SettingsScreen extends Screen {
 							config.save();
 							ping(config.hudEnabled ? "HUD on" : "HUD hidden");
 						}));
-				rows.add(cycle("Bazaar mode", "OFFER = Cofl sell offer · INSTANT = instant sell", Items.GOLD_INGOT,
+				rows.add(cycle("Pest Bazaar", "OFFER / INSTANT for Dung, Compost… Crops stay NPC", Items.GOLD_INGOT,
 						() -> config.useSellOffer() ? "OFFER" : "INSTANT", () -> {
 							config.priceMode = config.useSellOffer() ? "INSTANT" : "OFFER";
 							config.save();
-							ping("Prices: " + config.priceMode);
+							ping("Pest prices: " + config.priceMode);
 						}));
-				rows.add(toggle("Count seeds", "Adds enchanted seed price to wheat", Items.WHEAT_SEEDS,
+				rows.add(toggle("Count seeds", "Adds NPC seed price to the wheat mix", Items.WHEAT_SEEDS,
 						() -> config.includeSeeds, () -> {
 							config.includeSeeds = !config.includeSeeds;
 							config.save();
+						}));
+				rows.add(toggle("Pest drops", "Adds vacuum loot and kill coins to coins/hour", Items.BONE,
+						() -> config.includePestDrops, () -> {
+							config.includePestDrops = !config.includePestDrops;
+							config.save();
+							ping(config.includePestDrops ? "Pest drops on" : "Pest drops off");
 						}));
 				rows.add(action("Move HUD", "Drag the overlay with the mouse", Items.PAPER, this::openMove));
 				rows.add(action("Reset session", "Clears counter, time and profit", Items.CLOCK, () -> {

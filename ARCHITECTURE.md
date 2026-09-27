@@ -21,9 +21,15 @@ mod farming/
 │   ├── migrations/
 │   │   ├── 20260919120000_account_sync.sql
 │   │   ├── 20260919130000_account_sync_force_rls.sql
-│   │   └── 20260919140000_account_sync_per_uuid.sql
+│   │   ├── 20260919140000_account_sync_per_uuid.sql
+│   │   ├── 20260919170000_account_backup_discord_notify.sql
+│   │   └── 20260919180000_fix_discord_notify.sql
 │   └── functions/
-│       └── account-sync/
+│       ├── _shared/
+│       │   └── discord.ts
+│       ├── account-sync/
+│       │   └── index.ts
+│       └── account-backup-notify/
 │           └── index.ts
 └── src/
     ├── main/

@@ -27,11 +27,11 @@ The HUD shows when a **farming tool** is in hand. The crop comes from the broken
 | `/fermento toggle` | Enable or disable the HUD |
 | `/fermento hitbox` | 1-block hitbox when mature, lowest otherwise (cocoa included) |
 | `/fermento reset` | Reset the farm session (counter, time, profit) |
-| `/fermento prices` | Refresh Cofl Bazaar prices |
+| `/fermento prices` | Refresh Cofl Bazaar prices (pest loot: Dung, Compost…) |
 | `/fermento update` | Check GitHub for a new version |
 | `/fermento update install` | Download the JAR, close Minecraft, relaunch |
-| `/fermento mode OFFER` | **Sell offer** prices (default, Cofl `buyPrice` / 160) |
-| `/fermento mode INSTANT` | **Instant sell** prices (Cofl `sellPrice` / 160) |
+| `/fermento mode OFFER` | Pest loot **sell offer** (crops always use NPC) |
+| `/fermento mode INSTANT` | Pest loot **instant sell** (crops always use NPC) |
 
 ## HUD position
 
