@@ -8,6 +8,7 @@ import java.util.regex.Pattern;
 
 import dev.fermento.client.config.ModConfig;
 import dev.fermento.client.garden.Crop;
+import dev.fermento.client.garden.GardenDetector;
 import dev.fermento.client.garden.SkyblockItems;
 import dev.fermento.client.garden.TabList;
 import dev.fermento.client.prices.CoflBazaarService;
@@ -135,11 +136,10 @@ public final class EndstoneTracker {
 		if (!config.hudEnabled || !config.endstoneProfit || client.player == null) {
 			return false;
 		}
-		ItemStack held = client.player.getMainHandItem();
-		if (Crop.isFarmingTool(SkyblockItems.skyblockId(held)) || !miningTool(held)) {
+		if (Crop.isFarmingTool(SkyblockItems.skyblockId(client.player.getMainHandItem()))) {
 			return false;
 		}
-		return sessionLive(System.currentTimeMillis());
+		return GardenDetector.inTheEnd();
 	}
 
 	public void reset() {

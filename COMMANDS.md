@@ -20,7 +20,7 @@ Every option (HUD, hitbox, pest, pickaxe, pack, updates) lives in one screen, wi
 
 ## HUD (coins / hour)
 
-The HUD shows when a **farming tool** is in hand, or when a **pickaxe** is mining **End Stone**. The crop comes from the broken block, otherwise from the tool.
+The HUD shows when a **farming tool** is in hand, or while you are in **The End**. The crop comes from the broken block, otherwise from the tool.
 
 | Command | Description |
 | --- | --- |
@@ -109,7 +109,7 @@ When pickaxe ability cooldown hits **0** (item overlay / chat *You used your …
 
 ## End Stone profit
 
-While a **pickaxe / drill** is in hand and you mine **End Stone**, the same coins/hour HUD switches to End Stone.
+In **The End** (including Dragon's Nest and the other End areas), the same coins/hour HUD switches to End Stone.
 
 Profit follows SkyHanni's gemstone coins/hour: items that land in **sacks** (hover on the `[Sacks]` chat line), priced at **the better of NPC and bazaar**. End Stone NPC is 2 coins; Enchanted End Stone is 160 stones. Sell offer uses the bazaar when it beats NPC (instant sell usually does not). **Mite Gel** from that session is added the same way.
 

@@ -141,7 +141,7 @@ public final class ProfitHud {
 	private static List<String> buildEndstoneLines(EndstoneTracker.Snapshot snap) {
 		List<String> lines = new ArrayList<>();
 		lines.add("Fermento");
-		lines.add("End Stone" + (snap.paused() ? "  (AFK)" : ""));
+		lines.add("End Stone" + (snap.paused() && snap.activeMs() > 0 ? "  (AFK)" : ""));
 		lines.add("Blocks/s: " + String.format(Locale.US, "%.1f", snap.blocksPerSecond()));
 
 		MiningFortune.Reading fortune = snap.fortune();

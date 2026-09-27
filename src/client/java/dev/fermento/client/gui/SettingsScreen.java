@@ -329,7 +329,7 @@ public final class SettingsScreen extends Screen {
 		List<Row> rows = new ArrayList<>();
 		switch (tab) {
 			case 0 -> {
-				rows.add(toggle("Coins / hour HUD", "Crop hoe, or a pickaxe while mining End Stone", Items.GOLDEN_HOE,
+				rows.add(toggle("Coins / hour HUD", "Crop hoe, or while you are in The End", Items.GOLDEN_HOE,
 						() -> config.hudEnabled, () -> {
 							config.hudEnabled = !config.hudEnabled;
 							config.save();

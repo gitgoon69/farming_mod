@@ -18,13 +18,19 @@ public final class GardenDetector {
 	private static boolean onHypixel;
 	private static boolean onSkyblock;
 	private static boolean inGarden;
+	private static boolean inTheEnd;
 	private static int gardenMissTicks;
+	private static int endMissTicks;
 
 	private GardenDetector() {
 	}
 
 	public static boolean inGarden() {
 		return inGarden;
+	}
+
+	public static boolean inTheEnd() {
+		return inTheEnd;
 	}
 
 	public static boolean onSkyblock() {
@@ -41,13 +47,16 @@ public final class GardenDetector {
 		if (client.level == null || client.player == null) {
 			onSkyblock = false;
 			inGarden = false;
+			inTheEnd = false;
 			gardenMissTicks = 0;
+			endMissTicks = 0;
 			return;
 		}
 
 		if (!onHypixel && !client.hasSingleplayerServer()) {
 			onSkyblock = false;
 			inGarden = false;
+			inTheEnd = false;
 			return;
 		}
 
@@ -68,13 +77,28 @@ public final class GardenDetector {
 		} else {
 			inGarden = false;
 		}
+
+		boolean detectedEnd = onSkyblock && containsEnd(text);
+		if (detectedEnd) {
+			endMissTicks = 0;
+			inTheEnd = true;
+		} else if (inTheEnd) {
+			endMissTicks++;
+			if (endMissTicks > 60) {
+				inTheEnd = false;
+			}
+		} else {
+			inTheEnd = false;
+		}
 	}
 
 	public static void reset() {
 		onHypixel = false;
 		onSkyblock = false;
 		inGarden = false;
+		inTheEnd = false;
 		gardenMissTicks = 0;
+		endMissTicks = 0;
 	}
 
 	private static boolean containsGarden(String text) {
@@ -84,6 +108,23 @@ public final class GardenDetector {
 		}
 		return stripped.contains("The Garden") || stripped.contains("Garden")
 				|| stripped.contains("Plot -") || stripped.contains("Plot —");
+	}
+
+	/**
+	 * Scoreboard location for the End island, including sub-areas
+	 * (Dragon's Nest replaces the "The End" line).
+	 */
+	private static boolean containsEnd(String text) {
+		String stripped = ChatFormatting.stripFormatting(text);
+		if (stripped == null) {
+			stripped = text;
+		}
+		return stripped.contains("The End")
+				|| stripped.contains("Dragon's Nest")
+				|| stripped.contains("Dragons Nest")
+				|| stripped.contains("Void Sepulture")
+				|| stripped.contains("Void Slate")
+				|| stripped.contains("Endstone Protector");
 	}
 
 	private static boolean isConnectedToHypixel(Minecraft client) {
