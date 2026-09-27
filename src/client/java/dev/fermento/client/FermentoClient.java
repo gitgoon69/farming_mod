@@ -37,6 +37,7 @@ import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
@@ -76,6 +77,11 @@ public class FermentoClient implements ClientModInitializer {
 		pickaxeAbility = new PickaxeAbilityService(config);
 		pestCooldown = new PestCooldownTracker();
 		updates = new UpdateChecker();
+		ClientLifecycleEvents.CLIENT_STARTED.register(client -> {
+			if (config.checkUpdates) {
+				updates.onGameStart();
+			}
+		});
 		usagePing = new UsagePingService();
 		accountSync = new AccountSyncManager();
 		accountSync.start();
@@ -142,7 +148,7 @@ public class FermentoClient implements ClientModInitializer {
 			if (crop != null) {
 				tracker.onBlockBroken(crop);
 			}
-			endstone.onBlockBroken(state.getBlock());
+			endstone.onBlockBroken(pos, state.getBlock());
 		});
 
 		ClientReceiveMessageEvents.GAME.register((message, overlay) -> {

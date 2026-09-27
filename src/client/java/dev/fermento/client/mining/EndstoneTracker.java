@@ -2,7 +2,12 @@ package dev.fermento.client.mining;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -14,22 +19,29 @@ import dev.fermento.client.garden.TabList;
 import dev.fermento.client.prices.CoflBazaarService;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.phys.Vec3;
 
 /**
  * End Stone profit, same idea as the Garden HUD and SkyHanni's gemstone coins/hour:
  * count what actually landed in sacks, price it at {@code max(NPC, bazaar)}.
  * Until a sack message arrives, pace uses Mining Fortune + Block Fortune.
+ * Hypixel custom mining does not fire the vanilla break event, so breaks are
+ * counted when End Stone near the player turns into air while mining.
  */
 public final class EndstoneTracker {
 	private static final long BLOCK_WINDOW_MS = 5_000L;
 	private static final long SACK_WINDOW_MS = 15_000L;
 	private static final long FORTUNE_HOLD_MS = 8_000L;
 	private static final long HUD_LINGER_MS = 120_000L;
+	private static final long MINE_INTENT_MS = 800L;
+	private static final long COUNT_DEDUPE_MS = 1_500L;
+	private static final int SCAN_RADIUS = 8;
 	private static final int ENCHANTED_RATIO = 160;
 
 	/**
@@ -39,6 +51,8 @@ public final class EndstoneTracker {
 
 	private final Deque<Long> blockBreaks = new ArrayDeque<>();
 	private final Deque<Sample> sackWindow = new ArrayDeque<>();
+	private final Set<BlockPos> nearbyEndStone = new HashSet<>();
+	private final Map<BlockPos, Long> recentlyCounted = new HashMap<>();
 
 	private MiningFortune.Reading fortune = MiningFortune.Reading.NONE;
 	private long fortuneAt;
@@ -51,6 +65,9 @@ public final class EndstoneTracker {
 	private double sessionEndstone;
 	private double sessionEstimate;
 	private double sessionGel;
+	private long sessionBlocks;
+	private long lastMineIntentMs;
+	private boolean scanReady;
 	private int sackMessages;
 	private boolean tracking;
 
@@ -61,6 +78,7 @@ public final class EndstoneTracker {
 
 		if (!tracking || client.player == null || client.level == null) {
 			holdingPickaxe = false;
+			clearScan();
 			pauseIfIdle(now, config);
 			lastTickMs = now;
 			return;
@@ -68,6 +86,7 @@ public final class EndstoneTracker {
 
 		holdingPickaxe = miningTool(client.player.getMainHandItem());
 		refreshFortune(client, now);
+		scanEndStone(client, now);
 
 		if (!holdingPickaxe && (lastActivityMs <= 0 || now - lastActivityMs > HUD_LINGER_MS)) {
 			pauseIfIdle(now, config);
@@ -87,17 +106,105 @@ public final class EndstoneTracker {
 		lastTickMs = now;
 	}
 
-	public void onBlockBroken(Block block) {
-		if (!tracking || block != Blocks.END_STONE) {
+	public void onBlockBroken(BlockPos pos, Block block) {
+		if (block != Blocks.END_STONE || pos == null) {
 			return;
 		}
-		long now = System.currentTimeMillis();
+		countBreak(pos, System.currentTimeMillis());
+	}
+
+	private void scanEndStone(Minecraft client, long now) {
+		if (!GardenDetector.inTheEnd() || client.player == null || client.level == null) {
+			clearScan();
+			return;
+		}
+		if (client.options.keyAttack.isDown() || client.player.swinging) {
+			lastMineIntentMs = now;
+		}
+		boolean mining = lastMineIntentMs > 0 && now - lastMineIntentMs <= MINE_INTENT_MS;
+		Set<BlockPos> current = collectEndStone(client);
+		if (scanReady && mining) {
+			Vec3 eye = client.player.getEyePosition();
+			double max = (SCAN_RADIUS + 0.5) * (SCAN_RADIUS + 0.5);
+			for (BlockPos previous : nearbyEndStone) {
+				if (current.contains(previous) || previous.distToCenterSqr(eye) > max) {
+					continue;
+				}
+				if (!client.level.hasChunkAt(previous)) {
+					continue;
+				}
+				if (client.level.getBlockState(previous).isAir()) {
+					countBreak(previous, now);
+				}
+			}
+		}
+		undoRestored(current, now);
+		nearbyEndStone.clear();
+		nearbyEndStone.addAll(current);
+		scanReady = true;
+		recentlyCounted.entrySet().removeIf(entry -> now - entry.getValue() > 2_000L);
+	}
+
+	private Set<BlockPos> collectEndStone(Minecraft client) {
+		Set<BlockPos> found = new HashSet<>();
+		Vec3 eye = client.player.getEyePosition();
+		BlockPos center = BlockPos.containing(eye);
+		BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
+		double max = (SCAN_RADIUS + 0.5) * (SCAN_RADIUS + 0.5);
+		int r = SCAN_RADIUS;
+		for (int dx = -r; dx <= r; dx++) {
+			for (int dy = -r; dy <= r; dy++) {
+				for (int dz = -r; dz <= r; dz++) {
+					cursor.set(center.getX() + dx, center.getY() + dy, center.getZ() + dz);
+					if (cursor.distToCenterSqr(eye) > max || !client.level.hasChunkAt(cursor)) {
+						continue;
+					}
+					if (client.level.getBlockState(cursor).is(Blocks.END_STONE)) {
+						found.add(cursor.immutable());
+					}
+				}
+			}
+		}
+		return found;
+	}
+
+	private void countBreak(BlockPos pos, long now) {
+		if (!tracking) {
+			return;
+		}
+		BlockPos key = pos.immutable();
+		Long previous = recentlyCounted.get(key);
+		if (previous != null && now - previous < COUNT_DEDUPE_MS) {
+			return;
+		}
+		recentlyCounted.put(key, now);
+		sessionBlocks++;
 		blockBreaks.addLast(now);
 		noteActivity(now);
 		double drops = fortune.dropsPerBlock();
-		if (drops > 0) {
-			sessionEstimate += drops;
+		sessionEstimate += drops > 0 ? drops : 1.0;
+	}
+
+	private void undoRestored(Set<BlockPos> current, long now) {
+		if (recentlyCounted.isEmpty()) {
+			return;
 		}
+		Iterator<Map.Entry<BlockPos, Long>> it = recentlyCounted.entrySet().iterator();
+		while (it.hasNext()) {
+			Map.Entry<BlockPos, Long> entry = it.next();
+			if (!current.contains(entry.getKey()) || now - entry.getValue() > 2_000L) {
+				continue;
+			}
+			it.remove();
+			sessionBlocks = Math.max(0, sessionBlocks - 1);
+			double drops = fortune.dropsPerBlock();
+			sessionEstimate = Math.max(0, sessionEstimate - (drops > 0 ? drops : 1.0));
+		}
+	}
+
+	private void clearScan() {
+		nearbyEndStone.clear();
+		scanReady = false;
 	}
 
 	public void onChat(Component message) {
@@ -156,8 +263,12 @@ public final class EndstoneTracker {
 		sessionEndstone = 0;
 		sessionEstimate = 0;
 		sessionGel = 0;
+		sessionBlocks = 0;
+		lastMineIntentMs = 0;
 		sackMessages = 0;
 		tracking = false;
+		recentlyCounted.clear();
+		clearScan();
 	}
 
 	public Snapshot snapshot(ModConfig config, CoflBazaarService prices) {
@@ -171,7 +282,8 @@ public final class EndstoneTracker {
 		double sessionProfit = stoneCoins + gelCoins;
 		double hours = activeMs / 3_600_000.0;
 		double bps = blocksPerSecond();
-		double pace = bps * fortune.dropsPerBlock() * 3600.0 * unit;
+		double perBlock = fortune.dropsPerBlock() > 0 ? fortune.dropsPerBlock() : 1.0;
+		double pace = bps * perBlock * 3600.0 * unit;
 		double coinsPerHour = coinsPerHour(pace, sessionProfit, hours, unit, gelUnit);
 		String rateSource = rateSource(pace);
 		double sessionPerHour = hours > 0 ? sessionProfit / hours : 0;
@@ -179,6 +291,7 @@ public final class EndstoneTracker {
 		return new Snapshot(
 				fortune,
 				bps,
+				sessionBlocks,
 				coinsPerHour,
 				sessionPerHour,
 				sessionProfit,
@@ -213,8 +326,11 @@ public final class EndstoneTracker {
 		if (sackStonesPerSecond() >= 0 || (sawSackStones && activeMs > 0)) {
 			return "sacks";
 		}
-		if (pace > 0) {
+		if (pace > 0 && fortune.known()) {
 			return "fortune";
+		}
+		if (pace > 0) {
+			return "blocks";
 		}
 		return "";
 	}
@@ -261,16 +377,18 @@ public final class EndstoneTracker {
 	}
 
 	private double blocksPerSecond() {
-		if (blockBreaks.size() < 2) {
-			return 0;
+		if (blockBreaks.size() >= 2) {
+			long first = blockBreaks.peekFirst();
+			long last = blockBreaks.peekLast();
+			long dt = last - first;
+			if (dt > 0) {
+				return (blockBreaks.size() - 1) / (dt / 1000.0);
+			}
 		}
-		long first = blockBreaks.peekFirst();
-		long last = blockBreaks.peekLast();
-		long dt = last - first;
-		if (dt <= 0) {
-			return 0;
+		if (sessionBlocks > 0 && activeMs >= 1_000L) {
+			return sessionBlocks / (activeMs / 1000.0);
 		}
-		return (blockBreaks.size() - 1) / (dt / 1000.0);
+		return 0;
 	}
 
 	private double sackStonesPerSecond() {
@@ -378,6 +496,7 @@ public final class EndstoneTracker {
 	public record Snapshot(
 			MiningFortune.Reading fortune,
 			double blocksPerSecond,
+			long blocks,
 			double coinsPerHour,
 			double sessionCoinsPerHour,
 			double sessionProfit,

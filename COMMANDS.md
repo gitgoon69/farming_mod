@@ -29,7 +29,7 @@ The HUD shows when a **farming tool** is in hand, or while you are in **The End*
 | `/fermento reset` | Reset the farm session (counter, time, profit) |
 | `/fermento prices` | Refresh Cofl Bazaar prices (pest loot: Dung, Compost…) |
 | `/fermento update` | Check GitHub for a new version |
-| `/fermento update install` | Download the JAR, close Minecraft, relaunch |
+| `/fermento update install` | Download the JAR, close Minecraft, and relaunch |
 | `/fermento mode OFFER` | Pest loot **sell offer** (crops always use NPC) |
 | `/fermento mode INSTANT` | Pest loot **instant sell** (crops always use NPC) |
 
@@ -158,21 +158,21 @@ Only the named item is sold. Other inventory slots are not clicked.
 
 ## Updates
 
-At login (if online), the mod checks GitHub for **the same Minecraft version** you are running.
+When the game starts (and again on login if needed), the mod checks GitHub for **the same Minecraft version** you are running.
 
 - **26.1.2** → GitHub **Latest** (`fermento-x.y.z.jar`)
 - **26.2** → GitHub **Minecraft 26.2** release (`fermento-x.y.z-minecraft-26.2.jar`)
 
-If an update exists, **[Install]** appears in chat: it downloads that JAR into `mods/`, closes Minecraft, then a script replaces the old file. Just **relaunch the game**.
+If a newer JAR exists, it is downloaded into `mods/`, Minecraft closes, the old file is replaced, and **the same game process is started again**. No click on **[Install]** is required.
 
-A 26.1.2 client never auto-installs a 26.2 JAR, and a 26.2 client never auto-installs a 26.1.2 JAR.
+A 26.1.2 client never installs a 26.2 JAR, and a 26.2 client never installs a 26.1.2 JAR. The Loom dev environment does not auto-install.
 
-Windows locks the JAR while Minecraft is running, which is why the game is closed automatically (same idea as libautoupdate / ModUpdater).
+Windows locks the JAR while Minecraft is running, which is why the game is closed before the file is swapped (same idea as libautoupdate / ModUpdater).
 
 | Command | Description |
 | --- | --- |
 | `/fermento update` | Run the GitHub check again |
-| `/fermento update install` | Install the matching JAR and close the game |
+| `/fermento update install` | Install the matching JAR, close the game, and relaunch |
 
 Disable with `"checkUpdates": false` in `fermento.json`.
 

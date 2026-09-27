@@ -142,6 +142,7 @@ public final class ProfitHud {
 		List<String> lines = new ArrayList<>();
 		lines.add("Fermento");
 		lines.add("End Stone" + (snap.paused() && snap.activeMs() > 0 ? "  (AFK)" : ""));
+		lines.add("Blocks: " + formatCount(snap.blocks()));
 		lines.add("Blocks/s: " + String.format(Locale.US, "%.1f", snap.blocksPerSecond()));
 
 		MiningFortune.Reading fortune = snap.fortune();

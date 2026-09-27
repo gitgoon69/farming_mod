@@ -58,6 +58,10 @@ public final class UpdateChecker {
 	private int joinTicks = -1;
 	private int quitInTicks = -1;
 
+	public void onGameStart() {
+		refresh(false);
+	}
+
 	public void onJoin() {
 		announced = false;
 		joinTicks = 0;
@@ -138,8 +142,19 @@ public final class UpdateChecker {
 						return;
 					}
 					announceFromCommand(client);
-				} else if (error == null) {
+					return;
+				}
+				if (error != null || !updateAvailable()) {
+					return;
+				}
+				if (UpdateInstaller.development()) {
 					announceIfNeeded(client, false);
+					return;
+				}
+				if (!installing) {
+					FermentoMod.LOGGER.info("Fermento {} available (current {}), installing and relaunching",
+							latest.version(), currentVersion());
+					installNow();
 				}
 			});
 		});
@@ -230,6 +245,7 @@ public final class UpdateChecker {
 
 		Path pending = UpdateInstaller.pendingFile();
 		Path destination = UpdateInstaller.destinationJar(latest.jarUrl(), latest.version());
+		boolean relaunch;
 		try {
 			Files.deleteIfExists(pending);
 			UpdateInstaller.download(http, latest.jarUrl(), pending);
@@ -244,7 +260,7 @@ public final class UpdateChecker {
 				}
 			}
 
-			UpdateInstaller.launchSwapAndExit(pending, destination, oldJars);
+			relaunch = UpdateInstaller.launchSwapAndExit(pending, destination, oldJars);
 		} catch (IOException | InterruptedException e) {
 			try {
 				Files.deleteIfExists(pending);
@@ -257,9 +273,11 @@ public final class UpdateChecker {
 		}
 
 		Minecraft client = Minecraft.getInstance();
+		String closing = relaunch
+				? "Update " + latest.version() + " ready. The game will close and start again."
+				: "Update " + latest.version() + " ready. The game will close — start it again to load it.";
 		client.execute(() -> {
-			tell(client, "Update " + latest.version() + " downloaded. Minecraft will close — relaunch the game.",
-					ChatFormatting.GREEN);
+			tell(client, closing, ChatFormatting.GREEN);
 			quitInTicks = 40;
 		});
 	}
@@ -363,7 +381,7 @@ public final class UpdateChecker {
 	}
 
 	private void announceIfNeeded(Minecraft client, boolean force) {
-		if (client.player == null || (!force && announced)) {
+		if (installing || client.player == null || (!force && announced)) {
 			return;
 		}
 		if ("no-release".equals(lastError)) {
@@ -387,7 +405,7 @@ public final class UpdateChecker {
 				.withStyle(style -> style
 						.withClickEvent(new ClickEvent.RunCommand("/fermento update install"))
 						.withHoverEvent(new HoverEvent.ShowText(Component.literal(
-								"Download the Minecraft " + mc + " JAR, close Minecraft, then relaunch")))
+								"Download the Minecraft " + mc + " JAR, close Minecraft, and relaunch")))
 						.withColor(ChatFormatting.GREEN)
 						.withUnderlined(true));
 		line = line.append(Component.literal(minecraft26_2 ? "  [Minecraft 26.2 page]" : "  [GitHub page]")

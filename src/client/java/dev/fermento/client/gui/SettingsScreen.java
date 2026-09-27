@@ -421,7 +421,7 @@ public final class SettingsScreen extends Screen {
 			case 4 -> {
 				rows.add(toggle("Server pack last", "Vanilla + your packs override Hypixel", Items.CHEST,
 						() -> config.hideServerResourcePack, this::togglePack));
-				rows.add(toggle("GitHub updates", "Check this Minecraft version on login", Items.COMPASS,
+				rows.add(toggle("GitHub updates", "On launch, download the update and relaunch the game", Items.COMPASS,
 						() -> config.checkUpdates, () -> {
 							config.checkUpdates = !config.checkUpdates;
 							config.save();
@@ -435,7 +435,7 @@ public final class SettingsScreen extends Screen {
 					updates.refreshNow();
 					ping("GitHub check…");
 				}));
-				rows.add(action("Install update", "Download the JAR for this Minecraft version and close the game", Items.NETHER_STAR, () -> {
+				rows.add(action("Install update", "Download the JAR, close Minecraft, and relaunch", Items.NETHER_STAR, () -> {
 					updates.installNow();
 					ping("Installing…");
 				}));

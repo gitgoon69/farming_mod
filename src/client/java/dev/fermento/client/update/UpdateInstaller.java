@@ -13,6 +13,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 
 import dev.fermento.FermentoMod;
 import net.fabricmc.loader.api.FabricLoader;
@@ -123,25 +124,43 @@ public final class UpdateInstaller {
 		return null;
 	}
 
-	public static void launchSwapAndExit(Path pending, Path destination, List<Path> oldJars) throws IOException {
+	public static boolean launchSwapAndExit(Path pending, Path destination, List<Path> oldJars) throws IOException {
+		String command = captureCommandLine();
 		boolean windows = System.getProperty("os.name", "").toLowerCase(Locale.ROOT).contains("win");
 		if (windows) {
-			launchWindows(pending, destination, oldJars);
+			launchWindows(pending, destination, oldJars, command);
 		} else {
-			launchUnix(pending, destination, oldJars);
+			launchUnix(pending, destination, oldJars, command);
 		}
+		return command != null && !command.isBlank();
 	}
 
-	private static void launchWindows(Path pending, Path dest, List<Path> oldJars) throws IOException {
+	private static void launchWindows(Path pending, Path dest, List<Path> oldJars, String command) throws IOException {
 		Path script = modsDir().resolve("fermento-install.bat");
 		Path launcher = modsDir().resolve("fermento-install.vbs");
+		Path relaunch = modsDir().resolve("fermento-relaunch.vbs");
+		if (command != null && !command.isBlank()) {
+			String gameDir = FabricLoader.getInstance().getGameDir().toAbsolutePath().normalize().toString();
+			String vbs = "Set sh = CreateObject(\"Wscript.Shell\")\r\n"
+					+ "sh.CurrentDirectory = \"" + vbsString(gameDir) + "\"\r\n"
+					+ "sh.Run \"" + vbsString(command) + "\", 1, False\r\n";
+			Files.writeString(relaunch, vbs, StandardCharsets.UTF_8);
+		} else {
+			Files.deleteIfExists(relaunch);
+			FermentoMod.LOGGER.warn("Update will install, but the game command line could not be read for relaunch.");
+		}
 		StringBuilder bat = new StringBuilder();
 		bat.append("@echo off\r\n");
-		bat.append("ping 127.0.0.1 -n 6 > NUL\r\n");
+		bat.append("ping 127.0.0.1 -n 8 > NUL\r\n");
 		for (Path old : oldJars) {
 			bat.append("del /f /q ").append(winQuote(old)).append(" > NUL 2>&1\r\n");
 		}
 		bat.append("move /y ").append(winQuote(pending)).append(" ").append(winQuote(dest)).append(" > NUL 2>&1\r\n");
+		if (command != null && !command.isBlank()) {
+			bat.append("wscript.exe //nologo ").append(winQuote(relaunch)).append("\r\n");
+			bat.append("ping 127.0.0.1 -n 3 > NUL\r\n");
+			bat.append("del /f /q ").append(winQuote(relaunch)).append(" > NUL 2>&1\r\n");
+		}
 		bat.append("del /f /q ").append(winQuote(launcher)).append(" > NUL 2>&1\r\n");
 		bat.append("del /f /q ").append(winQuote(script)).append(" > NUL 2>&1\r\n");
 		bat.append("exit\r\n");
@@ -159,15 +178,22 @@ public final class UpdateInstaller {
 				.start();
 	}
 
-	private static void launchUnix(Path pending, Path dest, List<Path> oldJars) throws IOException {
+	private static void launchUnix(Path pending, Path dest, List<Path> oldJars, String command) throws IOException {
 		Path script = modsDir().resolve("fermento-install.sh");
+		String gameDir = FabricLoader.getInstance().getGameDir().toAbsolutePath().normalize().toString();
 		StringBuilder sh = new StringBuilder();
 		sh.append("#!/bin/sh\n");
-		sh.append("sleep 6\n");
+		sh.append("sleep 8\n");
 		for (Path old : oldJars) {
 			sh.append("rm -f ").append(shQuote(old)).append("\n");
 		}
 		sh.append("mv -f ").append(shQuote(pending)).append(" ").append(shQuote(dest)).append("\n");
+		if (command != null && !command.isBlank()) {
+			sh.append("cd ").append(shQuoteString(gameDir)).append("\n");
+			sh.append("nohup ").append(command).append(" >/dev/null 2>&1 &\n");
+		} else {
+			FermentoMod.LOGGER.warn("Update will install, but the game command line could not be read for relaunch.");
+		}
 		sh.append("rm -f ").append(shQuote(script)).append("\n");
 		Files.writeString(script, sh.toString(), StandardCharsets.UTF_8);
 		script.toFile().setExecutable(true);
@@ -178,11 +204,111 @@ public final class UpdateInstaller {
 				.start();
 	}
 
+	private static String captureCommandLine() {
+		var info = ProcessHandle.current().info();
+		if (isWindows()) {
+			String fromOs = captureWindowsCommandLine();
+			if (fromOs != null && !fromOs.isBlank()) {
+				return fromOs;
+			}
+		}
+		if (info.commandLine().isPresent() && !info.commandLine().get().isBlank()) {
+			return info.commandLine().get().trim();
+		}
+		String executable = info.command().orElse("");
+		if (executable.isBlank()) {
+			return null;
+		}
+		String[] args = info.arguments().orElse(null);
+		if (!isWindows()) {
+			StringBuilder shell = new StringBuilder(shQuoteString(executable));
+			if (args != null) {
+				for (String arg : args) {
+					shell.append(' ').append(shQuoteString(arg));
+				}
+			}
+			return shell.toString();
+		}
+		if (args == null || args.length == 0) {
+			return null;
+		}
+		StringBuilder line = new StringBuilder();
+		line.append('"').append(executable).append('"');
+		for (String arg : args) {
+			line.append(' ').append(quoteWindowsArg(arg));
+		}
+		return line.toString();
+	}
+
+	private static String captureWindowsCommandLine() {
+		long pid = ProcessHandle.current().pid();
+		Path output = modsDir().resolve("fermento-cmdline.txt");
+		try {
+			Files.createDirectories(modsDir());
+			Files.deleteIfExists(output);
+			ProcessBuilder builder = new ProcessBuilder(
+					"powershell.exe",
+					"-NoProfile",
+					"-NonInteractive",
+					"-Command",
+					"$p = Get-CimInstance Win32_Process -Filter ('ProcessId=' + $env:FERMENTO_PID); "
+							+ "Set-Content -LiteralPath $env:FERMENTO_CMDLINE -Value $p.CommandLine -Encoding utf8"
+			);
+			builder.environment().put("FERMENTO_PID", Long.toString(pid));
+			builder.environment().put("FERMENTO_CMDLINE", output.toAbsolutePath().toString());
+			builder.redirectErrorStream(true);
+			Process process = builder.start();
+			process.getInputStream().readAllBytes();
+			if (!process.waitFor(8, TimeUnit.SECONDS)) {
+				process.destroyForcibly();
+				return null;
+			}
+			if (!Files.isRegularFile(output)) {
+				return null;
+			}
+			String text = Files.readString(output, StandardCharsets.UTF_8).replace("\uFEFF", "").trim();
+			if (text.length() < 40 || text.length() > 30_000) {
+				return null;
+			}
+			return text.replace("\r", " ").replace("\n", " ").trim();
+		} catch (Exception e) {
+			FermentoMod.LOGGER.warn("Launch command unreadable: {}", e.toString());
+			return null;
+		} finally {
+			try {
+				Files.deleteIfExists(output);
+			} catch (IOException ignored) {
+			}
+		}
+	}
+
+	private static boolean isWindows() {
+		return System.getProperty("os.name", "").toLowerCase(Locale.ROOT).contains("win");
+	}
+
+	private static String quoteWindowsArg(String arg) {
+		if (arg.isEmpty()) {
+			return "\"\"";
+		}
+		if (arg.indexOf(' ') < 0 && arg.indexOf('"') < 0) {
+			return arg;
+		}
+		return "\"" + arg.replace("\"", "\\\"") + "\"";
+	}
+
+	private static String vbsString(String value) {
+		return value.replace("\"", "\"\"");
+	}
+
 	private static String winQuote(Path path) {
 		return "\"" + path.toAbsolutePath().normalize() + "\"";
 	}
 
 	private static String shQuote(Path path) {
-		return "'" + path.toAbsolutePath().normalize().toString().replace("'", "'\\''") + "'";
+		return shQuoteString(path.toAbsolutePath().normalize().toString());
+	}
+
+	private static String shQuoteString(String value) {
+		return "'" + value.replace("'", "'\\''") + "'";
 	}
 }
