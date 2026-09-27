@@ -23,6 +23,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.BlockHitResult;
@@ -51,7 +52,12 @@ public final class EndstoneTracker {
 	/**
 	 * SkyHanni {@code SackApi} hover lines: {@code +12 End Stone (Mining Sack)}.
 	 */
-	private static final Pattern SACK_DELTA = Pattern.compile("([+-][\\d,]+)\\s+(.+?)\\s+\\(([^)]+)\\)");
+	/**
+	 * Sack hover or chat line: {@code +1,200 End Stone}, {@code +1.2k Enchanted End Stone}, {@code +4 Mite Gel}.
+	 */
+	private static final Pattern LOOT_GAIN = Pattern.compile(
+			"(?i)\\+\\s*([\\d.,]+)\\s*([kmb]?)\\s+((?:enchanted\\s+)?end\\s*stone|mite\\s*gel)\\b"
+	);
 
 	private final Deque<Long> blockBreaks = new ArrayDeque<>();
 	private final Deque<Sample> sackWindow = new ArrayDeque<>();
@@ -72,6 +78,9 @@ public final class EndstoneTracker {
 	private long sessionBlocks;
 	private long lastMineIntentMs;
 	private boolean scanReady;
+	private double inventoryStones;
+	private double inventoryGel;
+	private boolean inventoryReady;
 	private int sackMessages;
 	private boolean tracking;
 
@@ -97,6 +106,8 @@ public final class EndstoneTracker {
 		if (holdingPickaxe && mining && engaged) {
 			noteActivity(now);
 		}
+		boolean recentMine = mining || (lastMineIntentMs > 0 && now - lastMineIntentMs <= 8_000L);
+		readInventory(client, recentMine);
 		if (engaged) {
 			scanEndStone(client, now, mining);
 		} else {
@@ -243,31 +254,65 @@ public final class EndstoneTracker {
 			return;
 		}
 		String visible = clean(message.getString());
-		if (!visible.startsWith("[Sacks]")) {
-			return;
-		}
 		String hover = hoverText(message);
-		if (hover.isBlank()) {
+		String lowerVisible = visible.toLowerCase(Locale.ROOT);
+		String lowerHover = hover.toLowerCase(Locale.ROOT);
+		boolean sackMessage = lowerVisible.contains("[sacks]")
+				|| lowerHover.contains("sack")
+				|| lowerHover.contains("added");
+		if (!sackMessage) {
 			return;
 		}
-		boolean touched = false;
-		Matcher matcher = SACK_DELTA.matcher(hover);
-		while (matcher.find()) {
-			int delta = parseSigned(matcher.group(1));
-			if (delta == 0) {
-				continue;
-			}
-			if (apply(itemName(matcher.group(2)), delta)) {
-				touched = true;
-			}
-		}
-		if (!touched) {
+		String source = lootText(hover) ? hover : visible;
+		if (!applyLootText(source)) {
 			return;
 		}
 		long now = System.currentTimeMillis();
 		noteActivity(now);
 		sackMessages++;
 		sackWindow.addLast(new Sample(sessionEndstone, sessionGel, now));
+	}
+
+	private void readInventory(Minecraft client, boolean countGains) {
+		if (client.player == null) {
+			inventoryReady = false;
+			return;
+		}
+		double stones = 0;
+		double gel = 0;
+		for (ItemStack stack : client.player.getInventory().getNonEquipmentItems()) {
+			stones += stonesIn(stack);
+			gel += gelIn(stack);
+		}
+		stones += stonesIn(client.player.getOffhandItem());
+		gel += gelIn(client.player.getOffhandItem());
+		if (!inventoryReady) {
+			inventoryStones = stones;
+			inventoryGel = gel;
+			inventoryReady = true;
+			return;
+		}
+		double stoneGain = stones - inventoryStones;
+		double gelGain = gel - inventoryGel;
+		inventoryStones = stones;
+		inventoryGel = gel;
+		if (!countGains) {
+			return;
+		}
+		boolean gained = false;
+		if (stoneGain > 0 && stoneGain < 100_000) {
+			addStones(stoneGain);
+			gained = true;
+		}
+		if (gelGain > 0 && gelGain < 10_000) {
+			sessionGel += gelGain;
+			gained = true;
+		}
+		if (gained) {
+			long now = System.currentTimeMillis();
+			noteActivity(now);
+			sackWindow.addLast(new Sample(sessionEndstone, sessionGel, now));
+		}
 	}
 
 	public boolean hudVisible(Minecraft client, ModConfig config) {
@@ -301,6 +346,9 @@ public final class EndstoneTracker {
 		lastMineIntentMs = 0;
 		sackMessages = 0;
 		tracking = false;
+		inventoryReady = false;
+		inventoryStones = 0;
+		inventoryGel = 0;
 		recentlyCounted.clear();
 		clearScan();
 	}
@@ -383,22 +431,101 @@ public final class EndstoneTracker {
 		}
 	}
 
-	private boolean apply(String item, int delta) {
-		if (item.equals("enchanted end stone")) {
-			sessionEndstone += delta * (double) ENCHANTED_RATIO;
-			sawSackStones = true;
-			return true;
+	private boolean applyLootText(String text) {
+		if (text == null || text.isBlank()) {
+			return false;
 		}
-		if (item.equals("end stone")) {
-			sessionEndstone += delta;
-			sawSackStones = true;
-			return true;
+		boolean touched = false;
+		Matcher matcher = LOOT_GAIN.matcher(text);
+		while (matcher.find()) {
+			double amount = parseAmount(matcher.group(1), matcher.group(2));
+			if (amount <= 0) {
+				continue;
+			}
+			String item = matcher.group(3).toLowerCase(Locale.ROOT).replaceAll("\\s+", " ").trim();
+			if (item.contains("mite")) {
+				sessionGel += amount;
+				touched = true;
+				continue;
+			}
+			if (item.contains("enchanted")) {
+				amount *= ENCHANTED_RATIO;
+			}
+			addStones(amount);
+			touched = true;
 		}
-		if (item.equals("mite gel") && delta > 0) {
-			sessionGel += delta;
-			return true;
+		return touched;
+	}
+
+	private void addStones(double stones) {
+		if (stones <= 0) {
+			return;
 		}
-		return false;
+		sessionEndstone += stones;
+		sawSackStones = true;
+		double perBlock = fortune.dropsPerBlock() > 0 ? fortune.dropsPerBlock() : 1.0;
+		long implied = Math.round(sessionEndstone / perBlock);
+		if (implied > sessionBlocks) {
+			sessionBlocks = implied;
+		}
+	}
+
+	private static boolean lootText(String text) {
+		return text != null && LOOT_GAIN.matcher(text).find();
+	}
+
+	private static double stonesIn(ItemStack stack) {
+		if (stack == null || stack.isEmpty()) {
+			return 0;
+		}
+		String id = SkyblockItems.skyblockId(stack).toUpperCase(Locale.ROOT);
+		int count = stack.getCount();
+		if (id.equals("ENCHANTED_ENDSTONE") || id.equals("ENCHANTED_END_STONE")) {
+			return count * (double) ENCHANTED_RATIO;
+		}
+		if (id.equals("END_STONE") || id.equals("ENDSTONE")) {
+			return count;
+		}
+		String name = clean(stack.getHoverName().getString()).toLowerCase(Locale.ROOT);
+		if (name.contains("enchanted") && (name.contains("end stone") || name.contains("endstone"))) {
+			return count * (double) ENCHANTED_RATIO;
+		}
+		if (name.contains("end stone") || name.contains("endstone") || stack.is(Items.END_STONE)) {
+			return count;
+		}
+		return 0;
+	}
+
+	private static double gelIn(ItemStack stack) {
+		if (stack == null || stack.isEmpty()) {
+			return 0;
+		}
+		String id = SkyblockItems.skyblockId(stack).toUpperCase(Locale.ROOT);
+		if (id.equals("MITE_GEL")) {
+			return stack.getCount();
+		}
+		String name = clean(stack.getHoverName().getString()).toLowerCase(Locale.ROOT);
+		return name.contains("mite gel") ? stack.getCount() : 0;
+	}
+
+	private static double parseAmount(String number, String suffix) {
+		if (number == null || number.isBlank()) {
+			return 0;
+		}
+		try {
+			double value = Double.parseDouble(number.replace(",", "").trim());
+			if (suffix == null || suffix.isEmpty()) {
+				return value;
+			}
+			return switch (suffix.toLowerCase(Locale.ROOT)) {
+				case "k" -> value * 1_000.0;
+				case "m" -> value * 1_000_000.0;
+				case "b" -> value * 1_000_000_000.0;
+				default -> value;
+			};
+		} catch (NumberFormatException e) {
+			return 0;
+		}
 	}
 
 	private boolean sessionLive(long now) {
@@ -476,6 +603,13 @@ public final class EndstoneTracker {
 	private static String hoverText(Component component) {
 		StringBuilder text = new StringBuilder();
 		collectHover(component, text, 0);
+		try {
+			component.visit((style, string) -> {
+				appendHover(style.getHoverEvent(), text);
+				return java.util.Optional.empty();
+			}, net.minecraft.network.chat.Style.EMPTY);
+		} catch (RuntimeException ignored) {
+		}
 		return text.toString();
 	}
 
@@ -483,29 +617,15 @@ public final class EndstoneTracker {
 		if (component == null || depth > 8) {
 			return;
 		}
-		HoverEvent hover = component.getStyle().getHoverEvent();
-		if (hover instanceof HoverEvent.ShowText show && show.value() != null) {
-			text.append(clean(show.value().getString())).append('\n');
-		}
+		appendHover(component.getStyle().getHoverEvent(), text);
 		for (Component sibling : component.getSiblings()) {
 			collectHover(sibling, text, depth + 1);
 		}
 	}
 
-	private static String itemName(String raw) {
-		String name = clean(raw).toLowerCase(Locale.ROOT);
-		name = name.replaceAll("^[^a-z]+", "").trim();
-		return name;
-	}
-
-	private static int parseSigned(String raw) {
-		if (raw == null || raw.isBlank()) {
-			return 0;
-		}
-		try {
-			return Integer.parseInt(raw.replace(",", "").trim());
-		} catch (NumberFormatException e) {
-			return 0;
+	private static void appendHover(HoverEvent hover, StringBuilder text) {
+		if (hover instanceof HoverEvent.ShowText show && show.value() != null) {
+			text.append(clean(show.value().getString())).append('\n');
 		}
 	}
 

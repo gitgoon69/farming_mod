@@ -136,39 +136,77 @@ public final class UpdateInstaller {
 	}
 
 	private static void launchWindows(Path pending, Path dest, List<Path> oldJars, String command) throws IOException {
-		Path script = modsDir().resolve("fermento-install.bat");
+		Path script = modsDir().resolve("fermento-install.ps1");
 		Path launcher = modsDir().resolve("fermento-install.vbs");
-		Path relaunch = modsDir().resolve("fermento-relaunch.vbs");
-		if (command != null && !command.isBlank()) {
-			String gameDir = FabricLoader.getInstance().getGameDir().toAbsolutePath().normalize().toString();
-			String vbs = "Set sh = CreateObject(\"Wscript.Shell\")\r\n"
-					+ "sh.CurrentDirectory = \"" + vbsString(gameDir) + "\"\r\n"
-					+ "sh.Run \"" + vbsString(command) + "\", 1, False\r\n";
-			Files.writeString(relaunch, vbs, StandardCharsets.UTF_8);
+		Path exeFile = modsDir().resolve("fermento-relaunch-exe.txt");
+		Path argsFile = modsDir().resolve("fermento-relaunch-args.txt");
+		WindowsLaunch relaunch = splitWindowsLaunch(command);
+		if (relaunch != null) {
+			writeUtf8Bom(exeFile, relaunch.executable());
+			writeUtf8Bom(argsFile, relaunch.arguments());
 		} else {
-			Files.deleteIfExists(relaunch);
+			Files.deleteIfExists(exeFile);
+			Files.deleteIfExists(argsFile);
 			FermentoMod.LOGGER.warn("Update will install, but the game command line could not be read for relaunch.");
 		}
-		StringBuilder bat = new StringBuilder();
-		bat.append("@echo off\r\n");
-		bat.append("ping 127.0.0.1 -n 8 > NUL\r\n");
-		for (Path old : oldJars) {
-			bat.append("del /f /q ").append(winQuote(old)).append(" > NUL 2>&1\r\n");
-		}
-		bat.append("move /y ").append(winQuote(pending)).append(" ").append(winQuote(dest)).append(" > NUL 2>&1\r\n");
-		if (command != null && !command.isBlank()) {
-			bat.append("wscript.exe //nologo ").append(winQuote(relaunch)).append("\r\n");
-			bat.append("ping 127.0.0.1 -n 3 > NUL\r\n");
-			bat.append("del /f /q ").append(winQuote(relaunch)).append(" > NUL 2>&1\r\n");
-		}
-		bat.append("del /f /q ").append(winQuote(launcher)).append(" > NUL 2>&1\r\n");
-		bat.append("del /f /q ").append(winQuote(script)).append(" > NUL 2>&1\r\n");
-		bat.append("exit\r\n");
-		Files.writeString(script, bat.toString(), StandardCharsets.UTF_8);
 
-		String batPath = script.toAbsolutePath().normalize().toString().replace("\"", "\"\"");
+		String gameDir = FabricLoader.getInstance().getGameDir().toAbsolutePath().normalize().toString();
+		StringBuilder ps = new StringBuilder();
+		ps.append("$ErrorActionPreference = 'Continue'\r\n");
+		ps.append("$targetPid = ").append(ProcessHandle.current().pid()).append("\r\n");
+		ps.append("$pending = ").append(psQuote(pending.toAbsolutePath().normalize().toString())).append("\r\n");
+		ps.append("$dest = ").append(psQuote(dest.toAbsolutePath().normalize().toString())).append("\r\n");
+		ps.append("$gameDir = ").append(psQuote(gameDir)).append("\r\n");
+		ps.append("$exeFile = ").append(psQuote(exeFile.toAbsolutePath().normalize().toString())).append("\r\n");
+		ps.append("$argsFile = ").append(psQuote(argsFile.toAbsolutePath().normalize().toString())).append("\r\n");
+		ps.append("$log = ").append(psQuote(modsDir().resolve("fermento-update.log").toAbsolutePath().normalize().toString())).append("\r\n");
+		ps.append("$old = @(\r\n");
+		for (Path old : oldJars) {
+			ps.append("  ").append(psQuote(old.toAbsolutePath().normalize().toString())).append("\r\n");
+		}
+		ps.append(")\r\n");
+		ps.append("function Write-Log($m) { Add-Content -LiteralPath $log -Value ((Get-Date -Format 'yyyy-MM-dd HH:mm:ss') + ' ' + $m) }\r\n");
+		ps.append("Write-Log 'waiting for Minecraft to exit'\r\n");
+		ps.append("$deadline = (Get-Date).AddSeconds(90)\r\n");
+		ps.append("while ((Get-Process -Id $targetPid -ErrorAction SilentlyContinue) -and ((Get-Date) -lt $deadline)) { Start-Sleep -Seconds 1 }\r\n");
+		ps.append("Start-Sleep -Seconds 2\r\n");
+		ps.append("foreach ($path in $old) {\r\n");
+		ps.append("  for ($i = 0; $i -lt 15; $i++) {\r\n");
+		ps.append("    try {\r\n");
+		ps.append("      if (Test-Path -LiteralPath $path) { Remove-Item -LiteralPath $path -Force -ErrorAction Stop }\r\n");
+		ps.append("      break\r\n");
+		ps.append("    } catch { Start-Sleep -Milliseconds 400 }\r\n");
+		ps.append("  }\r\n");
+		ps.append("}\r\n");
+		ps.append("for ($i = 0; $i -lt 15; $i++) {\r\n");
+		ps.append("  try { Move-Item -LiteralPath $pending -Destination $dest -Force -ErrorAction Stop; break } catch { Start-Sleep -Milliseconds 400 }\r\n");
+		ps.append("}\r\n");
+		ps.append("if (Test-Path -LiteralPath $pending) { Write-Log 'could not replace the mod jar' }\r\n");
+		ps.append("if ((Test-Path -LiteralPath $exeFile) -and (Test-Path -LiteralPath $argsFile)) {\r\n");
+		ps.append("  $exe = (Get-Content -LiteralPath $exeFile -Raw -Encoding UTF8).Trim().Trim([char]0xFEFF)\r\n");
+		ps.append("  $arg = (Get-Content -LiteralPath $argsFile -Raw -Encoding UTF8).Trim().Trim([char]0xFEFF)\r\n");
+		ps.append("  try {\r\n");
+		ps.append("    $psi = New-Object System.Diagnostics.ProcessStartInfo\r\n");
+		ps.append("    $psi.FileName = $exe\r\n");
+		ps.append("    $psi.Arguments = $arg\r\n");
+		ps.append("    $psi.WorkingDirectory = $gameDir\r\n");
+		ps.append("    $psi.UseShellExecute = $false\r\n");
+		ps.append("    [void][System.Diagnostics.Process]::Start($psi)\r\n");
+		ps.append("    Remove-Item -LiteralPath $log -Force -ErrorAction SilentlyContinue\r\n");
+		ps.append("  } catch {\r\n");
+		ps.append("    Write-Log ('relaunch failed: ' + $_.Exception.Message)\r\n");
+		ps.append("  }\r\n");
+		ps.append("} else {\r\n");
+		ps.append("  Write-Log 'no relaunch command'\r\n");
+		ps.append("}\r\n");
+		ps.append("Remove-Item -LiteralPath $exeFile, $argsFile -Force -ErrorAction SilentlyContinue\r\n");
+		ps.append("Remove-Item -LiteralPath ").append(psQuote(script.toAbsolutePath().normalize().toString()));
+		ps.append(", ").append(psQuote(launcher.toAbsolutePath().normalize().toString())).append(" -Force -ErrorAction SilentlyContinue\r\n");
+		writeUtf8Bom(script, ps.toString());
+
+		String psPath = script.toAbsolutePath().normalize().toString().replace("\"", "\"\"");
 		String vbs = "Set sh = CreateObject(\"Wscript.Shell\")\r\n"
-				+ "sh.Run \"cmd.exe /c \"\"" + batPath + "\"\"\", 0, False\r\n";
+				+ "sh.Run \"powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"\"" + psPath + "\"\"\", 0, False\r\n";
 		Files.writeString(launcher, vbs, StandardCharsets.UTF_8);
 
 		new ProcessBuilder("wscript.exe", "//B", "//nologo", launcher.toAbsolutePath().toString())
@@ -183,7 +221,13 @@ public final class UpdateInstaller {
 		String gameDir = FabricLoader.getInstance().getGameDir().toAbsolutePath().normalize().toString();
 		StringBuilder sh = new StringBuilder();
 		sh.append("#!/bin/sh\n");
-		sh.append("sleep 8\n");
+		sh.append("pid=").append(ProcessHandle.current().pid()).append("\n");
+		sh.append("i=0\n");
+		sh.append("while kill -0 \"$pid\" 2>/dev/null && [ \"$i\" -lt 90 ]; do\n");
+		sh.append("  sleep 1\n");
+		sh.append("  i=$((i+1))\n");
+		sh.append("done\n");
+		sh.append("sleep 2\n");
 		for (Path old : oldJars) {
 			sh.append("rm -f ").append(shQuote(old)).append("\n");
 		}
@@ -267,7 +311,7 @@ public final class UpdateInstaller {
 				return null;
 			}
 			String text = Files.readString(output, StandardCharsets.UTF_8).replace("\uFEFF", "").trim();
-			if (text.length() < 40 || text.length() > 30_000) {
+			if (text.length() < 40 || text.length() > 32_000) {
 				return null;
 			}
 			return text.replace("\r", " ").replace("\n", " ").trim();
@@ -286,6 +330,51 @@ public final class UpdateInstaller {
 		return System.getProperty("os.name", "").toLowerCase(Locale.ROOT).contains("win");
 	}
 
+	private record WindowsLaunch(String executable, String arguments) {
+	}
+
+	private static WindowsLaunch splitWindowsLaunch(String command) {
+		if (command == null || command.isBlank()) {
+			return null;
+		}
+		String line = command.trim();
+		String executable;
+		String arguments;
+		if (line.startsWith("\"")) {
+			int end = line.indexOf('"', 1);
+			if (end <= 1) {
+				return null;
+			}
+			executable = line.substring(1, end);
+			arguments = line.substring(end + 1).trim();
+		} else {
+			int space = line.indexOf(' ');
+			if (space <= 0) {
+				return null;
+			}
+			executable = line.substring(0, space);
+			arguments = line.substring(space + 1).trim();
+		}
+		if (executable.isBlank() || arguments.length() < 20 || arguments.length() > 32_000) {
+			return null;
+		}
+		return new WindowsLaunch(executable, arguments);
+	}
+
+	private static String psQuote(String value) {
+		return "'" + value.replace("'", "''") + "'";
+	}
+
+	private static void writeUtf8Bom(Path path, String text) throws IOException {
+		byte[] body = text.getBytes(StandardCharsets.UTF_8);
+		byte[] data = new byte[body.length + 3];
+		data[0] = (byte) 0xEF;
+		data[1] = (byte) 0xBB;
+		data[2] = (byte) 0xBF;
+		System.arraycopy(body, 0, data, 3, body.length);
+		Files.write(path, data);
+	}
+
 	private static String quoteWindowsArg(String arg) {
 		if (arg.isEmpty()) {
 			return "\"\"";
@@ -294,14 +383,6 @@ public final class UpdateInstaller {
 			return arg;
 		}
 		return "\"" + arg.replace("\"", "\\\"") + "\"";
-	}
-
-	private static String vbsString(String value) {
-		return value.replace("\"", "\"\"");
-	}
-
-	private static String winQuote(Path path) {
-		return "\"" + path.toAbsolutePath().normalize() + "\"";
 	}
 
 	private static String shQuote(Path path) {
