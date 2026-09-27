@@ -474,7 +474,7 @@ public final class SettingsScreen extends Screen {
 	private static String prismHint() {
 		String current = "Current: " + AccountSwitchService.currentName(Minecraft.getInstance());
 		if (PrismAccountSource.available()) {
-			return current + " · Prism accounts, one click";
+			return current + " · launcher accounts, one click";
 		}
 		return current + " · paste another account token";
 	}

@@ -180,7 +180,7 @@ Disable with `"checkUpdates": false` in `fermento.json`.
 
 From the **title screen**, the **pause menu** (top-right button), or Fermento **Sys → Switch account**.
 
-With **Prism Launcher**, the mod reads `%AppData%\PrismLauncher\accounts.json` and lists your Microsoft accounts. Click one to switch without copying a token (and without closing the game in Prism).
+The mod reads Microsoft accounts from common launchers (Prism / PolyMC / MultiMC, official `launcher_accounts.json`, Modrinth `minecraft_auth.json`, ATLauncher, GDLauncher) and from the **current in-game session** (any launcher). Click one to switch without copying a token.
 
 Otherwise, paste a Minecraft access token. The token is checked with Minecraft Services, then the client session is replaced. If you are on a server, the mod disconnects so you can rejoin as the new account.
 

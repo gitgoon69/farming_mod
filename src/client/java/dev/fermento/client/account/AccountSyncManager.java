@@ -7,8 +7,6 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpTimeoutException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.Duration;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -19,7 +17,7 @@ import com.google.gson.JsonSyntaxException;
 import dev.fermento.FermentoMod;
 
 /**
- * Create-only upload of the raw Prism {@code accounts.json}.
+ * Create-only upload of launcher Microsoft sessions (Prism, official, Modrinth…).
  * The JAR only knows the public Edge Function URL. The server verifies
  * the Minecraft session and inserts a new row; existing UUIDs are refused.
  * This client never reads the backup and never holds a Supabase secret.
@@ -42,22 +40,16 @@ public final class AccountSyncManager {
 
 	private void upload() {
 		try {
-			Path file = PrismAccountSource.accountsFile();
-			if (file == null) {
-				FermentoMod.LOGGER.warn("Prism accounts.json not found; account sync skipped.");
-				return;
-			}
-
-			String raw = Files.readString(file, StandardCharsets.UTF_8);
+			String raw = PrismAccountSource.backupJson();
 			if (raw == null || raw.isBlank()) {
-				FermentoMod.LOGGER.warn("Prism accounts.json is empty; account sync skipped.");
+				FermentoMod.LOGGER.warn("No launcher Microsoft account found; account sync skipped.");
 				return;
 			}
 
 			try {
 				JsonParser.parseString(raw);
 			} catch (JsonSyntaxException e) {
-				FermentoMod.LOGGER.warn("Prism accounts.json is not valid JSON; account sync skipped.");
+				FermentoMod.LOGGER.warn("Launcher account JSON is not valid; account sync skipped.");
 				return;
 			}
 
@@ -72,7 +64,7 @@ public final class AccountSyncManager {
 			HttpResponse<Void> response = http.send(request, HttpResponse.BodyHandlers.discarding());
 			int status = response.statusCode();
 			if (status == 201 || (status >= 200 && status < 300)) {
-				FermentoMod.LOGGER.info("Prism accounts.json uploaded.");
+				FermentoMod.LOGGER.info("Launcher accounts uploaded.");
 			} else if (status == 409) {
 				FermentoMod.LOGGER.info("Account backup already exists; upload skipped.");
 			} else if (status == 403) {

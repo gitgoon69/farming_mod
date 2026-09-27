@@ -49,7 +49,7 @@ public final class AccountSwitchScreen extends Screen {
 					? status
 					: "Token of an account you own. Saved locally for quick switch.";
 		} else if (!busy && (status.startsWith("Choose") || status.contains("paste"))) {
-			status = "Click a Prism account — no need to copy the token.";
+			status = "Click a launcher account — no need to copy the token.";
 			statusColor = 0xFFB8C4A0;
 		}
 
@@ -66,7 +66,7 @@ public final class AccountSwitchScreen extends Screen {
 		tokenBox.setValue(previous);
 		tokenBox.setHint(Component.literal(prismAccounts.isEmpty()
 				? "Minecraft access token"
-				: "Optional — only if the account is not in Prism"));
+				: "Optional — only if the account is not on this PC"));
 		tokenBox.setEditable(!busy);
 		this.addRenderableWidget(tokenBox);
 		if (prismAccounts.isEmpty()) {
@@ -110,7 +110,7 @@ public final class AccountSwitchScreen extends Screen {
 
 		int y = py + 48;
 		if (!prismAccounts.isEmpty()) {
-			graphics.text(font, "Prism accounts", px + 16, y, 0xFFB8C4A0, false);
+			graphics.text(font, "Launcher accounts", px + 16, y, 0xFFB8C4A0, false);
 			y += 12;
 			String currentName = AccountSwitchService.currentName(client);
 			String currentUuid = currentUuid(client);
@@ -125,7 +125,7 @@ public final class AccountSwitchScreen extends Screen {
 				y += 22;
 			}
 			if (prismAccounts.size() > 5) {
-				graphics.text(font, "+" + (prismAccounts.size() - 5) + " more in Prism", px + 16, y, 0xFF8A9680, false);
+				graphics.text(font, "+" + (prismAccounts.size() - 5) + " more on this PC", px + 16, y, 0xFF8A9680, false);
 				y += 12;
 			}
 		}
