@@ -335,7 +335,7 @@ public final class SettingsScreen extends Screen {
 							config.save();
 							ping(config.hudEnabled ? "HUD on" : "HUD hidden");
 						}));
-				rows.add(cycle("Bazaar mode", "OFFER / INSTANT for pests and End Stone. Crops stay NPC", Items.GOLD_INGOT,
+				rows.add(cycle("Bazaar mode", "OFFER / INSTANT for pest loot. End Stone stays NPC (2 coins)", Items.GOLD_INGOT,
 						() -> config.useSellOffer() ? "OFFER" : "INSTANT", () -> {
 							config.priceMode = config.useSellOffer() ? "INSTANT" : "OFFER";
 							config.save();

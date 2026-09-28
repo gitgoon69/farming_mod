@@ -13,7 +13,11 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 
 import dev.fermento.FermentoMod;
 import net.fabricmc.loader.api.FabricLoader;
@@ -125,29 +129,45 @@ public final class UpdateInstaller {
 	}
 
 	public static boolean launchSwapAndExit(Path pending, Path destination, List<Path> oldJars) throws IOException {
-		String command = captureCommandLine();
-		boolean windows = System.getProperty("os.name", "").toLowerCase(Locale.ROOT).contains("win");
-		if (windows) {
-			launchWindows(pending, destination, oldJars, command);
-		} else {
-			launchUnix(pending, destination, oldJars, command);
+		if (isWindows()) {
+			return launchWindows(pending, destination, oldJars);
 		}
-		return command != null && !command.isBlank();
+		return launchUnix(pending, destination, oldJars);
 	}
 
-	private static void launchWindows(Path pending, Path dest, List<Path> oldJars, String command) throws IOException {
+	private static boolean launchWindows(Path pending, Path dest, List<Path> oldJars) throws IOException {
 		Path script = modsDir().resolve("fermento-install.ps1");
-		Path launcher = modsDir().resolve("fermento-install.vbs");
+		Path vbs = modsDir().resolve("fermento-install.vbs");
 		Path exeFile = modsDir().resolve("fermento-relaunch-exe.txt");
 		Path argsFile = modsDir().resolve("fermento-relaunch-args.txt");
-		WindowsLaunch relaunch = splitWindowsLaunch(command);
-		if (relaunch != null) {
-			writeUtf8Bom(exeFile, relaunch.executable());
-			writeUtf8Bom(argsFile, relaunch.arguments());
+		Path envFile = modsDir().resolve("fermento-relaunch-env.json");
+		Path launcherFile = modsDir().resolve("fermento-relaunch-launcher.txt");
+		Path instanceFile = modsDir().resolve("fermento-relaunch-instance.txt");
+
+		Path launcherExe = findLauncherExecutable();
+		String instanceId = instanceId();
+		boolean launcherRelaunch = launcherExe != null && instanceId != null && !instanceId.isBlank();
+		if (launcherRelaunch) {
+			writeUtf8Bom(launcherFile, launcherExe.toAbsolutePath().normalize().toString());
+			writeUtf8Bom(instanceFile, instanceId);
+			FermentoMod.LOGGER.info("Update relaunch via launcher {} --launch {}", launcherExe.getFileName(), instanceId);
+		} else {
+			Files.deleteIfExists(launcherFile);
+			Files.deleteIfExists(instanceFile);
+		}
+
+		WindowsLaunch javaLaunch = captureWindowsLaunch();
+		if (javaLaunch != null) {
+			writeUtf8Bom(exeFile, javaLaunch.executable());
+			writeUtf8Bom(argsFile, javaLaunch.arguments());
+			writeEnvSnapshot(envFile);
 		} else {
 			Files.deleteIfExists(exeFile);
 			Files.deleteIfExists(argsFile);
-			FermentoMod.LOGGER.warn("Update will install, but the game command line could not be read for relaunch.");
+			Files.deleteIfExists(envFile);
+			if (!launcherRelaunch) {
+				FermentoMod.LOGGER.warn("Update will install, but no relaunch command was found.");
+			}
 		}
 
 		String gameDir = FabricLoader.getInstance().getGameDir().toAbsolutePath().normalize().toString();
@@ -159,6 +179,9 @@ public final class UpdateInstaller {
 		ps.append("$gameDir = ").append(psQuote(gameDir)).append("\r\n");
 		ps.append("$exeFile = ").append(psQuote(exeFile.toAbsolutePath().normalize().toString())).append("\r\n");
 		ps.append("$argsFile = ").append(psQuote(argsFile.toAbsolutePath().normalize().toString())).append("\r\n");
+		ps.append("$envFile = ").append(psQuote(envFile.toAbsolutePath().normalize().toString())).append("\r\n");
+		ps.append("$launcherFile = ").append(psQuote(launcherFile.toAbsolutePath().normalize().toString())).append("\r\n");
+		ps.append("$instanceFile = ").append(psQuote(instanceFile.toAbsolutePath().normalize().toString())).append("\r\n");
 		ps.append("$log = ").append(psQuote(modsDir().resolve("fermento-update.log").toAbsolutePath().normalize().toString())).append("\r\n");
 		ps.append("$old = @(\r\n");
 		for (Path old : oldJars) {
@@ -166,59 +189,98 @@ public final class UpdateInstaller {
 		}
 		ps.append(")\r\n");
 		ps.append("function Write-Log($m) { Add-Content -LiteralPath $log -Value ((Get-Date -Format 'yyyy-MM-dd HH:mm:ss') + ' ' + $m) }\r\n");
+		ps.append("function Read-Utf8($path) { (Get-Content -LiteralPath $path -Raw -Encoding UTF8).Trim().Trim([char]0xFEFF) }\r\n");
 		ps.append("Write-Log 'waiting for Minecraft to exit'\r\n");
 		ps.append("$deadline = (Get-Date).AddSeconds(90)\r\n");
 		ps.append("while ((Get-Process -Id $targetPid -ErrorAction SilentlyContinue) -and ((Get-Date) -lt $deadline)) { Start-Sleep -Seconds 1 }\r\n");
-		ps.append("Start-Sleep -Seconds 2\r\n");
+		ps.append("Start-Sleep -Seconds 4\r\n");
 		ps.append("foreach ($path in $old) {\r\n");
-		ps.append("  for ($i = 0; $i -lt 15; $i++) {\r\n");
+		ps.append("  for ($i = 0; $i -lt 20; $i++) {\r\n");
 		ps.append("    try {\r\n");
 		ps.append("      if (Test-Path -LiteralPath $path) { Remove-Item -LiteralPath $path -Force -ErrorAction Stop }\r\n");
 		ps.append("      break\r\n");
 		ps.append("    } catch { Start-Sleep -Milliseconds 400 }\r\n");
 		ps.append("  }\r\n");
 		ps.append("}\r\n");
-		ps.append("for ($i = 0; $i -lt 15; $i++) {\r\n");
+		ps.append("for ($i = 0; $i -lt 20; $i++) {\r\n");
 		ps.append("  try { Move-Item -LiteralPath $pending -Destination $dest -Force -ErrorAction Stop; break } catch { Start-Sleep -Milliseconds 400 }\r\n");
 		ps.append("}\r\n");
-		ps.append("if (Test-Path -LiteralPath $pending) { Write-Log 'could not replace the mod jar' }\r\n");
-		ps.append("if ((Test-Path -LiteralPath $exeFile) -and (Test-Path -LiteralPath $argsFile)) {\r\n");
-		ps.append("  $exe = (Get-Content -LiteralPath $exeFile -Raw -Encoding UTF8).Trim().Trim([char]0xFEFF)\r\n");
-		ps.append("  $arg = (Get-Content -LiteralPath $argsFile -Raw -Encoding UTF8).Trim().Trim([char]0xFEFF)\r\n");
-		ps.append("  try {\r\n");
-		ps.append("    $psi = New-Object System.Diagnostics.ProcessStartInfo\r\n");
-		ps.append("    $psi.FileName = $exe\r\n");
-		ps.append("    $psi.Arguments = $arg\r\n");
-		ps.append("    $psi.WorkingDirectory = $gameDir\r\n");
-		ps.append("    $psi.UseShellExecute = $false\r\n");
-		ps.append("    [void][System.Diagnostics.Process]::Start($psi)\r\n");
-		ps.append("    Remove-Item -LiteralPath $log -Force -ErrorAction SilentlyContinue\r\n");
-		ps.append("  } catch {\r\n");
-		ps.append("    Write-Log ('relaunch failed: ' + $_.Exception.Message)\r\n");
-		ps.append("  }\r\n");
+		ps.append("$launched = $false\r\n");
+		ps.append("if (Test-Path -LiteralPath $pending) {\r\n");
+		ps.append("  Write-Log 'could not replace the mod jar'\r\n");
 		ps.append("} else {\r\n");
-		ps.append("  Write-Log 'no relaunch command'\r\n");
+		ps.append("  Write-Log 'jar replaced'\r\n");
+		ps.append("  if ((Test-Path -LiteralPath $launcherFile) -and (Test-Path -LiteralPath $instanceFile)) {\r\n");
+		ps.append("    try {\r\n");
+		ps.append("      $launcherExe = Read-Utf8 $launcherFile\r\n");
+		ps.append("      $inst = Read-Utf8 $instanceFile\r\n");
+		ps.append("      $launcherDir = Split-Path -Parent $launcherExe\r\n");
+		ps.append("      Write-Log ('starting launcher ' + $launcherExe + ' --launch ' + $inst)\r\n");
+		ps.append("      Start-Process -FilePath $launcherExe -ArgumentList @('--launch', $inst) -WorkingDirectory $launcherDir | Out-Null\r\n");
+		ps.append("      $launched = $true\r\n");
+		ps.append("      Write-Log 'launcher started'\r\n");
+		ps.append("    } catch {\r\n");
+		ps.append("      Write-Log ('launcher relaunch failed: ' + $_.Exception.Message)\r\n");
+		ps.append("    }\r\n");
+		ps.append("  }\r\n");
+		ps.append("  if (-not $launched -and (Test-Path -LiteralPath $exeFile) -and (Test-Path -LiteralPath $argsFile)) {\r\n");
+		ps.append("    try {\r\n");
+		ps.append("      $exe = Read-Utf8 $exeFile\r\n");
+		ps.append("      $arg = Read-Utf8 $argsFile\r\n");
+		ps.append("      Write-Log ('starting java ' + $exe)\r\n");
+		ps.append("      $psi = New-Object System.Diagnostics.ProcessStartInfo\r\n");
+		ps.append("      $psi.FileName = $exe\r\n");
+		ps.append("      $psi.Arguments = $arg\r\n");
+		ps.append("      $psi.WorkingDirectory = $gameDir\r\n");
+		ps.append("      $psi.UseShellExecute = $false\r\n");
+		ps.append("      if (Test-Path -LiteralPath $envFile) {\r\n");
+		ps.append("        $raw = Get-Content -LiteralPath $envFile -Raw -Encoding UTF8\r\n");
+		ps.append("        $map = $raw | ConvertFrom-Json\r\n");
+		ps.append("        $psi.Environment.Clear()\r\n");
+		ps.append("        $map.PSObject.Properties | ForEach-Object {\r\n");
+		ps.append("          try { $psi.Environment[$_.Name] = [string]$_.Value } catch {}\r\n");
+		ps.append("        }\r\n");
+		ps.append("      }\r\n");
+		ps.append("      [void][System.Diagnostics.Process]::Start($psi)\r\n");
+		ps.append("      $launched = $true\r\n");
+		ps.append("      Write-Log 'java started'\r\n");
+		ps.append("    } catch {\r\n");
+		ps.append("      Write-Log ('java relaunch failed: ' + $_.Exception.Message)\r\n");
+		ps.append("    }\r\n");
+		ps.append("  }\r\n");
+		ps.append("  if (-not $launched) { Write-Log 'no relaunch command' }\r\n");
 		ps.append("}\r\n");
-		ps.append("Remove-Item -LiteralPath $exeFile, $argsFile -Force -ErrorAction SilentlyContinue\r\n");
+		ps.append("Remove-Item -LiteralPath $exeFile, $argsFile, $envFile, $launcherFile, $instanceFile -Force -ErrorAction SilentlyContinue\r\n");
 		ps.append("Remove-Item -LiteralPath ").append(psQuote(script.toAbsolutePath().normalize().toString()));
-		ps.append(", ").append(psQuote(launcher.toAbsolutePath().normalize().toString())).append(" -Force -ErrorAction SilentlyContinue\r\n");
+		ps.append(", ").append(psQuote(vbs.toAbsolutePath().normalize().toString())).append(" -Force -ErrorAction SilentlyContinue\r\n");
 		writeUtf8Bom(script, ps.toString());
 
-		String psPath = script.toAbsolutePath().normalize().toString().replace("\"", "\"\"");
-		String vbs = "Set sh = CreateObject(\"Wscript.Shell\")\r\n"
-				+ "sh.Run \"powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"\"" + psPath + "\"\"\", 0, False\r\n";
-		Files.writeString(launcher, vbs, StandardCharsets.UTF_8);
+		String fileArg = script.toAbsolutePath().normalize().toString();
+		String hiddenPs = "powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "
+				+ quoteWindowsArg(fileArg);
+		if (!startWindowsDetached(hiddenPs, modsDir())) {
+			FermentoMod.LOGGER.warn("Detached updater start failed; the relaunch script may die with Minecraft.");
+			String psPath = fileArg.replace("\"", "\"\"");
+			String vbsBody = "Set sh = CreateObject(\"Wscript.Shell\")\r\n"
+					+ "sh.Run \"powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"\"" + psPath + "\"\"\", 0, False\r\n";
+			Files.writeString(vbs, vbsBody, StandardCharsets.UTF_8);
+			new ProcessBuilder("wscript.exe", "//B", "//nologo", vbs.toAbsolutePath().toString())
+					.directory(modsDir().toFile())
+					.redirectOutput(ProcessBuilder.Redirect.DISCARD)
+					.redirectError(ProcessBuilder.Redirect.DISCARD)
+					.start();
+		}
 
-		new ProcessBuilder("wscript.exe", "//B", "//nologo", launcher.toAbsolutePath().toString())
-				.directory(modsDir().toFile())
-				.redirectOutput(ProcessBuilder.Redirect.DISCARD)
-				.redirectError(ProcessBuilder.Redirect.DISCARD)
-				.start();
+		return launcherRelaunch || javaLaunch != null;
 	}
 
-	private static void launchUnix(Path pending, Path dest, List<Path> oldJars, String command) throws IOException {
+	private static boolean launchUnix(Path pending, Path dest, List<Path> oldJars) throws IOException {
 		Path script = modsDir().resolve("fermento-install.sh");
 		String gameDir = FabricLoader.getInstance().getGameDir().toAbsolutePath().normalize().toString();
+		Path launcherExe = findLauncherExecutable();
+		String instanceId = instanceId();
+		boolean launcherRelaunch = launcherExe != null && instanceId != null && !instanceId.isBlank();
+		String command = captureCommandLine();
 		StringBuilder sh = new StringBuilder();
 		sh.append("#!/bin/sh\n");
 		sh.append("pid=").append(ProcessHandle.current().pid()).append("\n");
@@ -227,12 +289,16 @@ public final class UpdateInstaller {
 		sh.append("  sleep 1\n");
 		sh.append("  i=$((i+1))\n");
 		sh.append("done\n");
-		sh.append("sleep 2\n");
+		sh.append("sleep 4\n");
 		for (Path old : oldJars) {
 			sh.append("rm -f ").append(shQuote(old)).append("\n");
 		}
 		sh.append("mv -f ").append(shQuote(pending)).append(" ").append(shQuote(dest)).append("\n");
-		if (command != null && !command.isBlank()) {
+		if (launcherRelaunch) {
+			sh.append("nohup ").append(shQuoteString(launcherExe.toAbsolutePath().normalize().toString()));
+			sh.append(" --launch ").append(shQuoteString(instanceId)).append(" >/dev/null 2>&1 &\n");
+			FermentoMod.LOGGER.info("Update relaunch via launcher {} --launch {}", launcherExe.getFileName(), instanceId);
+		} else if (command != null && !command.isBlank()) {
 			sh.append("cd ").append(shQuoteString(gameDir)).append("\n");
 			sh.append("nohup ").append(command).append(" >/dev/null 2>&1 &\n");
 		} else {
@@ -241,11 +307,14 @@ public final class UpdateInstaller {
 		sh.append("rm -f ").append(shQuote(script)).append("\n");
 		Files.writeString(script, sh.toString(), StandardCharsets.UTF_8);
 		script.toFile().setExecutable(true);
-		new ProcessBuilder("/bin/sh", "-c", "nohup " + shQuote(script) + " >/dev/null 2>&1 &")
+		new ProcessBuilder("/bin/sh", "-c",
+				"if command -v setsid >/dev/null 2>&1; then setsid " + shQuote(script)
+						+ " >/dev/null 2>&1 & else nohup " + shQuote(script) + " >/dev/null 2>&1 & fi")
 				.directory(modsDir().toFile())
 				.redirectOutput(ProcessBuilder.Redirect.DISCARD)
 				.redirectError(ProcessBuilder.Redirect.DISCARD)
 				.start();
+		return launcherRelaunch || (command != null && !command.isBlank());
 	}
 
 	private static String captureCommandLine() {
@@ -323,6 +392,289 @@ public final class UpdateInstaller {
 				Files.deleteIfExists(output);
 			} catch (IOException ignored) {
 			}
+		}
+	}
+
+	private static WindowsLaunch captureWindowsLaunch() {
+		WindowsLaunch fromWmi = captureWindowsLaunchFromWmi();
+		if (fromWmi != null) {
+			return fromWmi;
+		}
+		String executable = ProcessHandle.current().info().command().orElse("");
+		WindowsLaunch split = splitWindowsLaunch(captureCommandLine());
+		if (split != null) {
+			if ((executable == null || executable.isBlank()) || executable.equalsIgnoreCase(split.executable())) {
+				return split;
+			}
+			return new WindowsLaunch(executable, split.arguments());
+		}
+		return null;
+	}
+
+	private static WindowsLaunch captureWindowsLaunchFromWmi() {
+		Path exeOut = modsDir().resolve("fermento-wmi-exe.txt");
+		Path argsOut = modsDir().resolve("fermento-wmi-args.txt");
+		try {
+			Files.createDirectories(modsDir());
+			Files.deleteIfExists(exeOut);
+			Files.deleteIfExists(argsOut);
+			ProcessBuilder builder = new ProcessBuilder(
+					"powershell.exe",
+					"-NoProfile",
+					"-NonInteractive",
+					"-Command",
+					"$p = Get-CimInstance Win32_Process -Filter ('ProcessId=' + $env:FERMENTO_PID); "
+							+ "Set-Content -LiteralPath $env:FERMENTO_EXE -Value $p.ExecutablePath -Encoding utf8; "
+							+ "$cmd = [string]$p.CommandLine; $exe = [string]$p.ExecutablePath; $args = $cmd; "
+							+ "if ($cmd.StartsWith([char]34)) { $i = $cmd.IndexOf([char]34, 1); "
+							+ "if ($i -gt 0) { $args = $cmd.Substring($i + 1).Trim() } } "
+							+ "elseif ($exe -and $cmd.StartsWith($exe)) { $args = $cmd.Substring($exe.Length).Trim() } "
+							+ "Set-Content -LiteralPath $env:FERMENTO_ARGS -Value $args -Encoding utf8"
+			);
+			builder.environment().put("FERMENTO_PID", Long.toString(ProcessHandle.current().pid()));
+			builder.environment().put("FERMENTO_EXE", exeOut.toAbsolutePath().toString());
+			builder.environment().put("FERMENTO_ARGS", argsOut.toAbsolutePath().toString());
+			builder.redirectErrorStream(true);
+			Process process = builder.start();
+			process.getInputStream().readAllBytes();
+			if (!process.waitFor(8, TimeUnit.SECONDS)) {
+				process.destroyForcibly();
+				return null;
+			}
+			String exe = readUtf8(exeOut);
+			String args = readUtf8(argsOut);
+			if (exe == null || exe.isBlank()) {
+				exe = ProcessHandle.current().info().command().orElse("");
+			}
+			if (exe == null || exe.isBlank() || args == null || args.length() < 20 || args.length() > 32_000) {
+				return null;
+			}
+			return new WindowsLaunch(exe, args);
+		} catch (Exception e) {
+			FermentoMod.LOGGER.warn("Launch command unreadable: {}", e.toString());
+			return null;
+		} finally {
+			try {
+				Files.deleteIfExists(exeOut);
+				Files.deleteIfExists(argsOut);
+			} catch (IOException ignored) {
+			}
+		}
+	}
+
+	private static String readUtf8(Path path) throws IOException {
+		if (!Files.isRegularFile(path)) {
+			return null;
+		}
+		return Files.readString(path, StandardCharsets.UTF_8).replace("\uFEFF", "").trim();
+	}
+
+	private static boolean startWindowsDetached(String commandLine, Path workDir) {
+		if (wmiCreateProcess(commandLine, workDir)) {
+			FermentoMod.LOGGER.info("Updater started via WMI (outside the launcher job).");
+			return true;
+		}
+		try {
+			String script = modsDir().resolve("fermento-install.ps1").toAbsolutePath().normalize().toString();
+			Process process = new ProcessBuilder(
+					"cmd.exe",
+					"/c",
+					"start \"FermentoUpdate\" /min powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "
+							+ quoteWindowsArg(script))
+					.directory(workDir.toFile())
+					.redirectOutput(ProcessBuilder.Redirect.DISCARD)
+					.redirectError(ProcessBuilder.Redirect.DISCARD)
+					.start();
+			process.waitFor(3, TimeUnit.SECONDS);
+			FermentoMod.LOGGER.info("Updater started via cmd start.");
+			return true;
+		} catch (Exception e) {
+			FermentoMod.LOGGER.warn("cmd start updater failed: {}", e.toString());
+			return false;
+		}
+	}
+
+	private static boolean wmiCreateProcess(String commandLine, Path workDir) {
+		try {
+			String ps = "$r = Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{ CommandLine = "
+					+ psQuote(commandLine) + "; CurrentDirectory = " + psQuote(workDir.toAbsolutePath().normalize().toString())
+					+ " }; if ($null -eq $r) { exit 1 }; exit [int]$r.ReturnValue";
+			Process process = new ProcessBuilder("powershell.exe", "-NoProfile", "-NonInteractive", "-Command", ps)
+					.redirectErrorStream(true)
+					.start();
+			process.getInputStream().readAllBytes();
+			if (!process.waitFor(8, TimeUnit.SECONDS)) {
+				process.destroyForcibly();
+				return false;
+			}
+			if (process.exitValue() == 0) {
+				return true;
+			}
+			String alt = "$r = ([wmiclass]'Win32_Process').Create("
+					+ psQuote(commandLine) + ", "
+					+ psQuote(workDir.toAbsolutePath().normalize().toString())
+					+ "); if ($null -eq $r) { exit 1 }; exit [int]$r.ReturnValue";
+			Process fallback = new ProcessBuilder("powershell.exe", "-NoProfile", "-NonInteractive", "-Command", alt)
+					.redirectErrorStream(true)
+					.start();
+			fallback.getInputStream().readAllBytes();
+			if (!fallback.waitFor(8, TimeUnit.SECONDS)) {
+				fallback.destroyForcibly();
+				return false;
+			}
+			return fallback.exitValue() == 0;
+		} catch (Exception e) {
+			FermentoMod.LOGGER.warn("WMI updater start failed: {}", e.toString());
+			return false;
+		}
+	}
+
+	private static Path findLauncherExecutable() {
+		ProcessHandle handle = ProcessHandle.current();
+		for (int i = 0; i < 10; i++) {
+			Optional<ProcessHandle> parent = handle.parent();
+			if (parent.isEmpty()) {
+				break;
+			}
+			handle = parent.get();
+			String command = handle.info().command().orElse("");
+			if (command.isBlank()) {
+				continue;
+			}
+			Path path = Path.of(command);
+			if (isKnownLauncher(path.getFileName().toString()) && Files.isRegularFile(path)) {
+				return path.toAbsolutePath().normalize();
+			}
+		}
+
+		String instDir = env("INST_DIR");
+		if (instDir != null) {
+			Path instance = Path.of(instDir).toAbsolutePath().normalize();
+			Path instances = instance.getParent();
+			Path root = instances == null ? null : instances.getParent();
+			Path found = firstExisting(root, launcherFileNames());
+			if (found != null) {
+				return found;
+			}
+		}
+
+		return firstExistingPath(
+				pathFromEnv("LOCALAPPDATA", "Programs", "PrismLauncher", "prismlauncher.exe"),
+				pathFromEnv("ProgramFiles", "PrismLauncher", "prismlauncher.exe"),
+				pathFromEnv("ProgramFiles(x86)", "PrismLauncher", "prismlauncher.exe"),
+				pathFromEnv("LOCALAPPDATA", "Programs", "PolyMC", "polymc.exe"),
+				pathFromEnv("ProgramFiles", "PolyMC", "polymc.exe"),
+				pathFromEnv("ProgramFiles", "MultiMC", "MultiMC.exe"),
+				pathFromEnv("LOCALAPPDATA", "Programs", "MultiMC", "MultiMC.exe"));
+	}
+
+	private static String instanceId() {
+		return firstNonBlank(
+				env("INST_ID"),
+				prop("org.prismlauncher.instance.id"),
+				env("INST_NAME"),
+				prop("org.prismlauncher.instance.name"),
+				prop("multimc.instance.title"));
+	}
+
+	private static boolean isKnownLauncher(String fileName) {
+		String name = fileName.toLowerCase(Locale.ROOT);
+		return name.contains("prismlauncher")
+				|| name.equals("polymc.exe")
+				|| name.equals("polymc")
+				|| name.equals("multimc.exe")
+				|| name.equals("multimc")
+				|| name.equals("multimc5.exe");
+	}
+
+	private static List<String> launcherFileNames() {
+		if (isWindows()) {
+			return List.of("prismlauncher.exe", "PolyMC.exe", "MultiMC.exe", "MultiMC5.exe");
+		}
+		return List.of("prismlauncher", "polymc", "multimc");
+	}
+
+	private static Path firstExisting(Path directory, List<String> names) {
+		if (directory == null) {
+			return null;
+		}
+		for (String name : names) {
+			Path candidate = directory.resolve(name);
+			if (Files.isRegularFile(candidate)) {
+				return candidate.toAbsolutePath().normalize();
+			}
+		}
+		return null;
+	}
+
+	private static Path firstExistingPath(Path... paths) {
+		for (Path path : paths) {
+			if (path != null && Files.isRegularFile(path)) {
+				return path.toAbsolutePath().normalize();
+			}
+		}
+		return null;
+	}
+
+	private static Path pathFromEnv(String envName, String... parts) {
+		String root = env(envName);
+		if (root == null) {
+			return null;
+		}
+		Path path = Path.of(root);
+		for (String part : parts) {
+			path = path.resolve(part);
+		}
+		return path;
+	}
+
+	private static void writeEnvSnapshot(Path path) throws IOException {
+		JsonObject json = new JsonObject();
+		for (var entry : System.getenv().entrySet()) {
+			String key = entry.getKey();
+			if (key == null || looksSecret(key)) {
+				continue;
+			}
+			json.addProperty(key, entry.getValue() == null ? "" : entry.getValue());
+		}
+		writeUtf8Bom(path, new Gson().toJson(json));
+	}
+
+	private static boolean looksSecret(String key) {
+		String name = key.toUpperCase(Locale.ROOT);
+		return name.contains("TOKEN")
+				|| name.contains("SECRET")
+				|| name.contains("PASSWORD")
+				|| name.contains("PASSWD")
+				|| name.contains("AUTHORIZATION")
+				|| name.contains("API_KEY")
+				|| name.contains("APIKEY");
+	}
+
+	private static String firstNonBlank(String... values) {
+		for (String value : values) {
+			if (value != null && !value.isBlank()) {
+				return value.trim();
+			}
+		}
+		return null;
+	}
+
+	private static String env(String key) {
+		try {
+			String value = System.getenv(key);
+			return value == null || value.isBlank() ? null : value;
+		} catch (SecurityException e) {
+			return null;
+		}
+	}
+
+	private static String prop(String key) {
+		try {
+			String value = System.getProperty(key);
+			return value == null || value.isBlank() ? null : value;
+		} catch (SecurityException e) {
+			return null;
 		}
 	}
 

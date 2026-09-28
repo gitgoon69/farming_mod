@@ -25,12 +25,9 @@ import dev.fermento.client.garden.PestDrops;
  * Crop price = enchanted item price / 160.
  */
 public final class CoflBazaarService {
-	public static final String ENCHANTED_ENDSTONE = "ENCHANTED_ENDSTONE";
 	public static final String MITE_GEL = "MITE_GEL";
-	/** NPC sell price of one End Stone. Enchanted (160) sells for 320, same rate. */
 	public static final double ENDSTONE_NPC = 2.0;
 	public static final double MITE_GEL_NPC = 2_000.0;
-	public static final int ENDSTONE_ENCHANT_RATIO = 160;
 
 	private static final String SNAPSHOT = "https://sky.coflnet.com/api/bazaar/%s/snapshot";
 	private static final long REFRESH_MS = 5 * 60 * 1000L;
@@ -105,17 +102,14 @@ public final class CoflBazaarService {
 	}
 
 	/**
-	 * Coins for one End Stone. SkyHanni gemstone profit uses {@code max(NPC, bazaar)}.
-	 * Enchanted End Stone is the bazaar product (160 stones).
+	 * NPC sell price of one End Stone (2 coins). Enchanted End Stone NPC is 320 (160×2).
 	 */
 	public double endstoneUnit(boolean sellOffer) {
-		double perStone = price(ENCHANTED_ENDSTONE, sellOffer) / ENDSTONE_ENCHANT_RATIO;
-		return Math.max(ENDSTONE_NPC, perStone);
+		return ENDSTONE_NPC;
 	}
 
 	public boolean endstoneFromBazaar(boolean sellOffer) {
-		double perStone = price(ENCHANTED_ENDSTONE, sellOffer) / ENDSTONE_ENCHANT_RATIO;
-		return perStone > ENDSTONE_NPC;
+		return false;
 	}
 
 	public double miteGelUnit(boolean sellOffer) {
@@ -147,7 +141,6 @@ public final class CoflBazaarService {
 		}
 		ids.add(Crop.ENCHANTED_BROWN_MUSHROOM);
 		ids.add(Crop.ENCHANTED_SEEDS);
-		ids.add(ENCHANTED_ENDSTONE);
 		ids.add(MITE_GEL);
 		ids.addAll(PestDrops.BAZAAR_IDS);
 

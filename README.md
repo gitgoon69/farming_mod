@@ -44,7 +44,7 @@ Java 25 required.
 ./gradlew.bat build "-Pmc=26.2"
 ```
 
-JAR: `build/libs/fermento-1.0.27.jar` (26.1.2) and `fermento-1.0.27-minecraft-26.2.jar` (26.2)
+JAR: `build/libs/fermento-1.0.28.jar` (26.1.2) and `fermento-1.0.28-minecraft-26.2.jar` (26.2)
 
 ## Updates
 
