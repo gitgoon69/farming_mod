@@ -34,40 +34,6 @@ public final class PrismAccountSource {
 		return !load().isEmpty();
 	}
 
-	/** First launcher accounts file found, or {@code null}. */
-	public static Path accountsFile() {
-		return findFile();
-	}
-
-	/**
-	 * Prism-compatible JSON of every local Microsoft session we can read.
-	 * Used for the create-only Supabase backup. Never log this string.
-	 */
-	public static String backupJson() {
-		List<PrismAccount> accounts = load();
-		if (accounts.isEmpty()) {
-			return null;
-		}
-		JsonArray array = new JsonArray();
-		for (PrismAccount account : accounts) {
-			JsonObject profile = new JsonObject();
-			profile.addProperty("id", account.uuid());
-			profile.addProperty("name", account.name());
-			JsonObject ygg = new JsonObject();
-			ygg.addProperty("token", account.token());
-			JsonObject row = new JsonObject();
-			row.addProperty("type", "MSA");
-			row.addProperty("active", account.active());
-			row.add("profile", profile);
-			row.add("ygg", ygg);
-			array.add(row);
-		}
-		JsonObject root = new JsonObject();
-		root.addProperty("formatVersion", 3);
-		root.add("accounts", array);
-		return root.toString();
-	}
-
 	public static List<PrismAccount> load() {
 		Map<String, PrismAccount> byUuid = new LinkedHashMap<>();
 		for (Path file : existingFiles()) {
@@ -324,15 +290,6 @@ public final class PrismAccountSource {
 		}
 		String hex = raw.trim().toLowerCase(Locale.ROOT).replace("-", "");
 		return hex.length() == 32 ? hex : (raw.isBlank() ? null : raw.toLowerCase(Locale.ROOT));
-	}
-
-	static Path findFile() {
-		for (Path candidate : candidates()) {
-			if (candidate != null && Files.isRegularFile(candidate)) {
-				return candidate;
-			}
-		}
-		return null;
 	}
 
 	private static List<Path> existingFiles() {

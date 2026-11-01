@@ -11,7 +11,6 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 
 import dev.fermento.FermentoMod;
-import dev.fermento.client.account.AccountSyncManager;
 import dev.fermento.client.account.GameMenuAccountButton;
 import dev.fermento.client.compat.ClientScreens;
 import dev.fermento.client.config.ModConfig;
@@ -62,7 +61,6 @@ public class FermentoClient implements ClientModInitializer {
 	private static PestCooldownTracker pestCooldown;
 	private static UpdateChecker updates;
 	private static UsagePingService usagePing;
-	private static AccountSyncManager accountSync;
 	private static KeyMapping openMenuKey;
 
 	@Override
@@ -83,8 +81,6 @@ public class FermentoClient implements ClientModInitializer {
 			}
 		});
 		usagePing = new UsagePingService();
-		accountSync = new AccountSyncManager();
-		accountSync.start();
 		GameMenuAccountButton.register();
 		openMenuKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
 				"key.fermento.open",
