@@ -32,6 +32,7 @@ import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -374,6 +375,16 @@ public final class SettingsScreen extends Screen {
 						() -> config.afkTimeoutSeconds + "s",
 						() -> stepAfk(-5),
 						() -> stepAfk(5)));
+				rows.add(toggle("Auto orb", "Right-click the slot item on the ground. Replaces it past 30 blocks or after 250s", Items.ENDER_EYE,
+						() -> config.autoOrb, () -> {
+							config.autoOrb = !config.autoOrb;
+							config.save();
+							ping(config.autoOrb ? "Auto orb on" : "Auto orb off");
+						}));
+				rows.add(stepper("Orb slot", "Hotbar slot that holds the orb", Items.CHEST,
+						() -> Integer.toString(config.orbHotbarSlot),
+						() -> stepOrb(-1),
+						() -> stepOrb(1)));
 			}
 			case 2 -> {
 				rows.add(toggle("Rod → loadout", "Right-click rod: Pest / Farm", Items.FISHING_ROD,
@@ -409,7 +420,7 @@ public final class SettingsScreen extends Screen {
 							config.save();
 							ping(config.endstoneProfit ? "End Stone profit on" : "End Stone profit off");
 						}));
-				rows.add(toggle("Auto pickaxe ability", "Right-click when mining cooldown hits 0", Items.IRON_PICKAXE,
+				rows.add(toggle("Auto pickaxe ability", "Right-click at 0. Timer on screen, big title when it fires", Items.IRON_PICKAXE,
 						() -> config.autoPickaxeAbility, () -> {
 							config.autoPickaxeAbility = !config.autoPickaxeAbility;
 							if (!config.autoPickaxeAbility) {
@@ -463,6 +474,12 @@ public final class SettingsScreen extends Screen {
 
 	private void stepAfk(int delta) {
 		config.afkTimeoutSeconds = Mth.clamp(config.afkTimeoutSeconds + delta, 5, 120);
+		config.save();
+	}
+
+	private void stepOrb(int delta) {
+		int max = Inventory.getSelectionSize();
+		config.orbHotbarSlot = Mth.clamp(config.orbHotbarSlot + delta, 1, max);
 		config.save();
 	}
 

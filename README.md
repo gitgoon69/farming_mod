@@ -4,7 +4,7 @@
   <img src="logo.png" width="192" alt="Fermento — pièce d'or et blé du Garden">
 </p>
 
-Client-only Fabric mod for Hypixel SkyBlock Garden. Named after the endgame farming armor.
+Client-only Fabric mod for SkyBlock Garden. Named after the endgame farming armor.
 
 ## Download
 
@@ -44,7 +44,7 @@ Java 25 required.
 ./gradlew.bat build "-Pmc=26.2"
 ```
 
-JAR: `build/libs/fermento-1.0.28.jar` (26.1.2) and `fermento-1.0.28-minecraft-26.2.jar` (26.2)
+JAR: `build/libs/fermento-1.0.29.jar` (26.1.2) and `fermento-1.0.29-minecraft-26.2.jar` (26.2)
 
 ## Updates
 

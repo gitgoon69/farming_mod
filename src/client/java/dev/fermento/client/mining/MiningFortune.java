@@ -11,7 +11,7 @@ import java.util.regex.Pattern;
  * for End Stone (same way gemstone fortune is added for gemstones).
  */
 public final class MiningFortune {
-	/** Hypixel icon shared by Mining Fortune and Block Fortune (SkyHanni {@code SkyblockStat}). */
+	/** icon shared by Mining Fortune and Block Fortune (SkyHanni {@code SkyblockStat}). */
 	static final char FORTUNE_ICON = '\uE053';
 	private static final char LEGACY_CLOVER = '\u2618';
 

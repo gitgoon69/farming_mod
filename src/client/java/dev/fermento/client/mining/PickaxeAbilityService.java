@@ -39,10 +39,16 @@ public final class PickaxeAbilityService {
 	private static final int RETRY_INTERVAL_TICKS = 8;
 	private static final int MAX_RETRIES = 3;
 	private static final long DEFAULT_COOLDOWN_MS = 120_000L;
+	private static final long LAUNCH_FLASH_MS = 2_200L;
+	private static final long FLASH_GAP_MS = 800L;
 
 	private final ModConfig config;
 	private boolean sawCooldown;
 	private long readyAtMs;
+	private long displayReadyAtMs;
+	private long launchedAtMs;
+	private long cooldownTotalMs;
+	private String abilityName = "";
 	private int retryTicks;
 	private int retriesLeft;
 
@@ -53,8 +59,44 @@ public final class PickaxeAbilityService {
 	public void reset() {
 		sawCooldown = false;
 		readyAtMs = 0;
+		displayReadyAtMs = 0;
+		launchedAtMs = 0;
+		cooldownTotalMs = 0;
+		abilityName = "";
 		retryTicks = 0;
 		retriesLeft = 0;
+	}
+
+	public View view(Minecraft client) {
+		if (!config.autoPickaxeAbility || client.player == null) {
+			return View.HIDDEN;
+		}
+		if (!GardenDetector.onSkyblock() || GardenDetector.inGarden()) {
+			return View.HIDDEN;
+		}
+		ItemStack held = client.player.getMainHandItem();
+		if (!isMiningPickaxe(held)) {
+			return View.HIDDEN;
+		}
+		long now = System.currentTimeMillis();
+		long total = cooldownTotalMs;
+		String lore = loreText(held);
+		if (total <= 0) {
+			total = parseCooldownMs(lore);
+		}
+		long remaining = 0L;
+		float percent = client.player.getCooldowns().getCooldownPercent(held, 0.0f);
+		if (percent > 0.001f && total > 0) {
+			remaining = (long) Math.ceil(percent * (double) total);
+		} else if (displayReadyAtMs > now) {
+			remaining = displayReadyAtMs - now;
+		}
+		String name = abilityName.isBlank() ? abilityNameFrom(lore) : abilityName;
+		if (name.isBlank()) {
+			name = "Ability";
+		}
+		boolean launched = launchedAtMs > 0 && now - launchedAtMs < LAUNCH_FLASH_MS;
+		return new View(true, name, remaining, total, launched);
 	}
 
 	public void onChat(String raw) {
@@ -69,10 +111,13 @@ public final class PickaxeAbilityService {
 		if (!used.find()) {
 			return;
 		}
-		long cooldownMs = cooldownMsFromHeld(used.group(1));
-		readyAtMs = System.currentTimeMillis() + cooldownMs;
+		String name = cleanAbility(used.group(1));
+		long cooldownMs = cooldownMsFromHeld(name);
+		long now = System.currentTimeMillis();
+		readyAtMs = now + cooldownMs;
 		sawCooldown = true;
 		retriesLeft = 0;
+		noteActivated(name, cooldownMs, true);
 		FermentoMod.LOGGER.info("Pickaxe ability used, ready in {}ms", cooldownMs);
 	}
 
@@ -134,7 +179,33 @@ public final class PickaxeAbilityService {
 			readyAtMs = 0;
 		}
 		client.gameMode.useItem(player, InteractionHand.MAIN_HAND);
+		flashLaunch(abilityNameFrom(loreText(held)));
 		FermentoMod.LOGGER.info("Auto pickaxe ability");
+	}
+
+	private void noteActivated(String name, long cooldownMs, boolean refreshFlash) {
+		long now = System.currentTimeMillis();
+		if (name != null && !name.isBlank()) {
+			abilityName = cleanAbility(name);
+		}
+		if (cooldownMs > 0) {
+			cooldownTotalMs = cooldownMs;
+			displayReadyAtMs = now + cooldownMs;
+			readyAtMs = now + cooldownMs;
+		}
+		if (refreshFlash && now - launchedAtMs > FLASH_GAP_MS) {
+			launchedAtMs = now;
+		}
+	}
+
+	private void flashLaunch(String name) {
+		long now = System.currentTimeMillis();
+		if (name != null && !name.isBlank()) {
+			abilityName = cleanAbility(name);
+		}
+		if (now - launchedAtMs > FLASH_GAP_MS) {
+			launchedAtMs = now;
+		}
 	}
 
 	public static boolean isMiningPickaxe(ItemStack stack) {
@@ -212,6 +283,25 @@ public final class PickaxeAbilityService {
 		}
 	}
 
+	private static String abilityNameFrom(String lore) {
+		Matcher matcher = ABILITY_LORE.matcher(lore);
+		if (!matcher.find()) {
+			return "";
+		}
+		return cleanAbility(matcher.group(1));
+	}
+
+	private static String cleanAbility(String raw) {
+		if (raw == null) {
+			return "";
+		}
+		String name = raw.trim();
+		if (name.length() > 32) {
+			name = name.substring(0, 32).trim();
+		}
+		return name;
+	}
+
 	private static String loreText(ItemStack stack) {
 		ItemLore lore = stack.getOrDefault(DataComponents.LORE, ItemLore.EMPTY);
 		StringBuilder text = new StringBuilder();
@@ -224,5 +314,22 @@ public final class PickaxeAbilityService {
 	private static String strip(String value) {
 		String stripped = ChatFormatting.stripFormatting(value);
 		return stripped == null ? "" : stripped.trim();
+	}
+
+	public record View(boolean visible, String name, long remainingMs, long totalMs, boolean launched) {
+		public static final View HIDDEN = new View(false, "", 0L, 0L, false);
+
+		public String timerText() {
+			if (totalMs <= 0 && remainingMs <= 0) {
+				return "--";
+			}
+			long seconds = (Math.max(0L, remainingMs) + 999L) / 1000L;
+			if (seconds <= 0L) {
+				return "READY";
+			}
+			long minutes = seconds / 60L;
+			long rest = seconds % 60L;
+			return minutes + ":" + (rest < 10 ? "0" : "") + rest;
+		}
 	}
 }

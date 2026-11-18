@@ -3,7 +3,7 @@
 	"id": "fermento",
 	"version": "${version}",
 	"name": "Fermento",
-	"description": "Garden coins/hour, pests, and Bazaar prices for Hypixel SkyBlock. Named after the endgame farming set.",
+	"description": "Garden coins/hour, pests, and Bazaar prices for SkyBlock. Named after the endgame farming set.",
 	"icon": "assets/fermento/icon.png",
 	"authors": [
 		"matte"

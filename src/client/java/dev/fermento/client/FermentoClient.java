@@ -13,6 +13,7 @@ import com.mojang.brigadier.context.CommandContext;
 import dev.fermento.FermentoMod;
 import dev.fermento.client.account.GameMenuAccountButton;
 import dev.fermento.client.compat.ClientScreens;
+import dev.fermento.client.compat.SlashChatFix;
 import dev.fermento.client.config.ModConfig;
 import dev.fermento.client.garden.Crop;
 import dev.fermento.client.garden.FarmingTracker;
@@ -22,11 +23,13 @@ import dev.fermento.client.garden.VisitorLogbookStats;
 import dev.fermento.client.gui.SettingsScreen;
 import dev.fermento.client.hud.HudMoveScreen;
 import dev.fermento.client.hud.PestCooldownAlertHud;
+import dev.fermento.client.hud.PickaxeAbilityHud;
 import dev.fermento.client.hud.PestModeHud;
 import dev.fermento.client.hud.ProfitHud;
 import dev.fermento.client.loadout.PestLoadoutService;
 import dev.fermento.client.mining.EndstoneTracker;
 import dev.fermento.client.mining.PickaxeAbilityService;
+import dev.fermento.client.orb.OrbPlacerService;
 import dev.fermento.client.prices.CoflBazaarService;
 import dev.fermento.client.sell.NpcSellService;
 import dev.fermento.client.update.UpdateChecker;
@@ -58,6 +61,7 @@ public class FermentoClient implements ClientModInitializer {
 	private static NpcSellService npcSell;
 	private static PestLoadoutService pestLoadout;
 	private static PickaxeAbilityService pickaxeAbility;
+	private static OrbPlacerService orbPlacer;
 	private static PestCooldownTracker pestCooldown;
 	private static UpdateChecker updates;
 	private static UsagePingService usagePing;
@@ -73,6 +77,7 @@ public class FermentoClient implements ClientModInitializer {
 		npcSell = new NpcSellService();
 		pestLoadout = new PestLoadoutService(config);
 		pickaxeAbility = new PickaxeAbilityService(config);
+		orbPlacer = new OrbPlacerService(config);
 		pestCooldown = new PestCooldownTracker();
 		updates = new UpdateChecker();
 		ClientLifecycleEvents.CLIENT_STARTED.register(client -> {
@@ -102,6 +107,10 @@ public class FermentoClient implements ClientModInitializer {
 				FermentoMod.id("pest_cooldown_alert"),
 				(graphics, delta) -> PestCooldownAlertHud.render(graphics, delta, config, pestCooldown)
 		);
+		HudElementRegistry.addLast(
+				FermentoMod.id("pickaxe_ability"),
+				(graphics, delta) -> PickaxeAbilityHud.render(graphics, delta, pickaxeAbility)
+		);
 
 		ScreenEvents.AFTER_INIT.register((client, screen, width, height) -> {
 			if (!(screen instanceof AbstractContainerScreen<?>)) {
@@ -115,6 +124,7 @@ public class FermentoClient implements ClientModInitializer {
 		});
 
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
+			SlashChatFix.tick(client);
 			if (openMenuKey.consumeClick()) {
 				if (ClientScreens.current(client) instanceof SettingsScreen) {
 					ClientScreens.close(client);
@@ -133,7 +143,9 @@ public class FermentoClient implements ClientModInitializer {
 				pestLoadout.onPestAlert();
 			}
 			pestLoadout.tick(client);
-			if (!pestLoadout.running() && !npcSell.running()) {
+			boolean inventoryFree = !pestLoadout.running() && !npcSell.running();
+			orbPlacer.tick(client, inventoryFree);
+			if (inventoryFree && !orbPlacer.busy()) {
 				pickaxeAbility.tick(client);
 			}
 			updates.tick(client);
@@ -155,6 +167,7 @@ public class FermentoClient implements ClientModInitializer {
 				endstone.onChat(message);
 			}
 			pickaxeAbility.onChat(text);
+			orbPlacer.onChat(text);
 		});
 
 		ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
@@ -173,6 +186,7 @@ public class FermentoClient implements ClientModInitializer {
 			VisitorLogbookStats.reset();
 			pestLoadout.resetSession();
 			pickaxeAbility.reset();
+			orbPlacer.reset();
 			pestCooldown.reset();
 			if (npcSell.running()) {
 				npcSell.cancel();
@@ -266,6 +280,17 @@ public class FermentoClient implements ClientModInitializer {
 							} else {
 								feedback(ctx, "Hypixel server pack: normal priority. Reconnect to put it back on top.");
 							}
+							return 1;
+						}))
+						.then(literal("orb").executes(ctx -> {
+							config.autoOrb = !config.autoOrb;
+							config.save();
+							if (!config.autoOrb) {
+								orbPlacer.reset();
+							}
+							feedback(ctx, config.autoOrb
+									? "Auto orb: ON (slot " + config.orbHotbarSlot + ", 30 blocks, 250s)."
+									: "Auto orb: OFF.");
 							return 1;
 						}))
 						.then(literal("pickaxe").executes(ctx -> {
@@ -362,7 +387,7 @@ public class FermentoClient implements ClientModInitializer {
 	}
 
 	private static int help(CommandContext<FabricClientCommandSource> ctx) {
-		ctx.getSource().sendFeedback(Component.literal("Fermento — /fermento (menu) | menu | sell <item> [times] | pest | pestauto | pestalert | pickaxe | endstone | serverpack | update [install] | sell cancel | move [x y|reset] | reset | toggle | hitbox | prices | mode <OFFER|INSTANT>").withStyle(ChatFormatting.GOLD));
+		ctx.getSource().sendFeedback(Component.literal("Fermento — /fermento (menu) | menu | sell <item> [times] | pest | pestauto | pestalert | orb | pickaxe | endstone | serverpack | update [install] | sell cancel | move [x y|reset] | reset | toggle | hitbox | prices | mode <OFFER|INSTANT>").withStyle(ChatFormatting.GOLD));
 		return 1;
 	}
 

@@ -77,13 +77,13 @@ Right-click with a **fishing rod**:
 | `/fermento pestalert` | Enable or disable the pest cooldown alert (tab) |
 | `/fermento pestauto` | Auto Pest loadout at 2m50, /setspawn on spawn, Farm 0.5–1s later |
 | `/fermento pickaxe` | Auto pickaxe ability (right-click when cooldown hits 0) |
-| `/fermento serverpack` | Hypixel server pack at lowest priority (default: ON) |
+| `/fermento serverpack` | server pack at lowest priority (default: ON) |
 
 Names in `fermento.json`: `pestLoadoutName` (default `Pest`), `farmLoadoutName` (default `Farm`).
 
 ## Pest cooldown alert (tab)
 
-The Hypixel tab **Pests** widget shows a timer `Cooldown: 1m 58s`. At **2m50** remaining, a large title appears with a **5-second countdown** and a sound.
+The Server tab **Pests** widget shows a timer `Cooldown: 1m 58s`. At **2m50** remaining, a large title appears with a **5-second countdown** and a sound.
 
 The Pests widget must be enabled: `/widget` → Pests.
 
@@ -121,9 +121,6 @@ Until a sack message arrives, coins/hour is a pace: blocks you break × `(1 + (M
 | --- | --- |
 | `/fermento endstone` | Enable or disable End Stone profit (default: ON) |
 
-## Hypixel server pack
-
-Hypixel forces the **World Specific Resources Hypixel Skyblock** pack. The mod still accepts it (required to play) and keeps it loaded for SkyBlock item textures, but puts it **last**: vanilla Minecraft and your packs take priority.
 
 | Command | Description |
 | --- | --- |

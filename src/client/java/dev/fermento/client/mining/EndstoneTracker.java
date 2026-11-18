@@ -34,7 +34,7 @@ import net.minecraft.world.phys.Vec3;
  * End Stone profit, same idea as the Garden HUD and SkyHanni's gemstone coins/hour:
  * count what actually landed in sacks, priced at NPC (2 coins / End Stone).
  * Until a sack message arrives, pace uses Mining Fortune + Block Fortune.
- * Hypixel custom mining does not fire the vanilla break event, so breaks are
+ * custom mining does not fire the vanilla break event, so breaks are
  * counted when End Stone near the player turns into air while mining.
  * The session starts as soon as a pickaxe is swung at End Stone, even if the
  * scoreboard area name is not "The End".
