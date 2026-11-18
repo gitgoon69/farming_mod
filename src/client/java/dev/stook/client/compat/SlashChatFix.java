@@ -3,83 +3,128 @@ package dev.stook.client.compat;
 import java.lang.reflect.Field;
 
 import org.lwjgl.glfw.GLFW;
+import org.lwjgl.glfw.GLFWCharCallback;
+import org.lwjgl.glfw.GLFWCharCallbackI;
 import org.lwjgl.glfw.GLFWKeyCallback;
 import org.lwjgl.glfw.GLFWKeyCallbackI;
 
+import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.ChatScreen;
+import net.minecraft.client.gui.screens.Screen;
 
 /**
- * Polar types "." when the slash key is pressed. Put "/" in chat instead,
- * including when that key opens the chat line.
+ * Polar turns the slash key into "." in chat. Put "/" back, including the
+ * character that opens the chat line.
  */
 public final class SlashChatFix {
-	private static final int OPEN_WAIT_TICKS = 5;
+	private static final int ARM_TICKS = 8;
 
-	private static GLFWKeyCallback callback;
-	private static boolean installed;
-	private static volatile boolean slashEdge;
+	private static GLFWKeyCallback keyCallback;
+	private static GLFWCharCallback charCallback;
+	private static GLFWKeyCallbackI keyPrevious;
+	private static GLFWCharCallbackI charPrevious;
+	private static boolean screenHook;
+	private static int keyDepth;
+	private static int charDepth;
+	private static int layoutSlashKey = GLFW.GLFW_KEY_SLASH;
+	private static boolean layoutScanned;
+
+	private static volatile int arm;
 	private static boolean slashWasDown;
-	private static int pendingOpen;
 	private static boolean hadChat;
 	private static String lastValue;
 	private static int lastCursor;
+	private static boolean writing;
 	private static Field inputField;
 
 	private SlashChatFix() {
 	}
 
 	public static void tick(Minecraft client) {
-		install(client);
-		boolean down = keyDown(client);
+		ensureHooks(client);
+		boolean down = slashDown(client);
 		if (down && !slashWasDown) {
-			slashEdge = true;
+			arm = ARM_TICKS;
 		}
 		slashWasDown = down;
-
-		boolean pressedTick = slashEdge;
-		if (slashEdge) {
-			pendingOpen = OPEN_WAIT_TICKS;
-			slashEdge = false;
+		apply(client);
+		if (arm > 0) {
+			arm--;
 		}
+	}
 
+	private static void apply(Minecraft client) {
 		EditBox input = chatInput(client);
-		if (input != null) {
-			String value = input.getValue();
-			int cursor = input.getCursorPosition();
-			if (!hadChat && pendingOpen > 0 && ".".equals(value)) {
-				input.setValue("/");
-				input.setCursorPosition(1);
-				input.setHighlightPos(1);
-				value = "/";
-				cursor = 1;
-			} else if (hadChat && pressedTick) {
-				int dots = insertedDots(lastValue, lastCursor, value, cursor);
-				if (dots > 0) {
-					int at = lastCursor;
-					String fixed = value.substring(0, at) + "/".repeat(dots) + value.substring(at + dots);
-					input.setValue(fixed);
-					int caret = at + dots;
-					input.setCursorPosition(caret);
-					input.setHighlightPos(caret);
-					value = fixed;
-					cursor = caret;
-				}
-			}
-			lastValue = value;
-			lastCursor = cursor;
-			hadChat = true;
-			pendingOpen = 0;
+		if (input == null) {
+			hadChat = false;
+			lastValue = null;
+			lastCursor = 0;
 			return;
 		}
-
-		hadChat = false;
-		lastValue = null;
-		lastCursor = 0;
-		if (pendingOpen > 0) {
-			pendingOpen--;
+		if ((arm > 0 || slashWasDown) && !writing) {
+			rewrite(input);
 		}
+		lastValue = input.getValue();
+		lastCursor = input.getCursorPosition();
+		hadChat = true;
+	}
+
+	private static void rewrite(EditBox input) {
+		String value = input.getValue();
+		if (value == null || value.indexOf('.') < 0) {
+			return;
+		}
+		int cursor = input.getCursorPosition();
+		String fixed = null;
+		int caret = cursor;
+		if (!hadChat || lastValue == null) {
+			if (dotsOnly(value)) {
+				fixed = "/".repeat(value.length());
+				caret = fixed.length();
+			}
+		} else {
+			int dots = insertedDots(lastValue, lastCursor, value, cursor);
+			if (dots > 0) {
+				fixed = value.substring(0, lastCursor) + "/".repeat(dots) + value.substring(lastCursor + dots);
+				caret = lastCursor + dots;
+			} else if (value.startsWith(lastValue)) {
+				String extra = value.substring(lastValue.length());
+				if (dotsOnly(extra)) {
+					fixed = lastValue + "/".repeat(extra.length());
+					caret = fixed.length();
+				}
+			} else if (".".equals(value) && ("/".equals(lastValue) || lastValue.isEmpty())) {
+				fixed = "/";
+				caret = 1;
+			}
+		}
+		if (fixed == null || fixed.equals(value)) {
+			return;
+		}
+		writing = true;
+		try {
+			input.setValue(fixed);
+			input.setCursorPosition(Math.min(caret, fixed.length()));
+			input.setHighlightPos(Math.min(caret, fixed.length()));
+			lastValue = fixed;
+			lastCursor = Math.min(caret, fixed.length());
+		} finally {
+			writing = false;
+		}
+	}
+
+	private static boolean dotsOnly(String value) {
+		if (value == null || value.isEmpty()) {
+			return false;
+		}
+		for (int i = 0; i < value.length(); i++) {
+			if (value.charAt(i) != '.') {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	private static int insertedDots(String before, int cursorBefore, String after, int cursorAfter) {
@@ -96,69 +141,157 @@ public final class SlashChatFix {
 			}
 		}
 		int head = Math.min(cursorBefore, before.length());
-		if (!after.substring(0, cursorBefore).equals(before.substring(0, head))) {
+		if (!after.regionMatches(0, before, 0, head)) {
 			return 0;
 		}
-		if (!after.substring(cursorBefore + added).equals(before.substring(head))) {
+		if (!after.regionMatches(cursorBefore + added, before, head, before.length() - head)) {
 			return 0;
 		}
 		return added;
 	}
 
-	private static void install(Minecraft client) {
-		if (installed || client.getWindow() == null) {
+	private static void armFromKey(int key, int scancode) {
+		if (key == GLFW.GLFW_KEY_SLASH || key == GLFW.GLFW_KEY_KP_DIVIDE || key == layoutSlashKey) {
+			arm = ARM_TICKS;
+			return;
+		}
+		String name = GLFW.glfwGetKeyName(key, scancode);
+		if ("/".equals(name)) {
+			layoutSlashKey = key;
+			arm = ARM_TICKS;
+		}
+	}
+
+	private static void ensureHooks(Minecraft client) {
+		ensureScreenHook();
+		if (client.getWindow() == null) {
 			return;
 		}
 		long handle = client.getWindow().handle();
 		if (handle == 0L) {
 			return;
 		}
-		GLFWKeyCallbackI[] previous = new GLFWKeyCallbackI[1];
-		callback = new GLFWKeyCallback() {
-			@Override
-			public void invoke(long window, int key, int scancode, int action, int mods) {
-				if (key == GLFW.GLFW_KEY_SLASH && (action == GLFW.GLFW_PRESS || action == GLFW.GLFW_REPEAT)) {
-					slashEdge = true;
+		if (!layoutScanned) {
+			layoutScanned = true;
+			scanLayoutSlash();
+		}
+		if (keyCallback == null) {
+			keyCallback = new GLFWKeyCallback() {
+				@Override
+				public void invoke(long window, int key, int scancode, int action, int mods) {
+					if (keyDepth > 0) {
+						return;
+					}
+					keyDepth++;
+					try {
+						if (action == GLFW.GLFW_PRESS || action == GLFW.GLFW_REPEAT) {
+							armFromKey(key, scancode);
+						}
+						GLFWKeyCallbackI prior = keyPrevious;
+						if (prior != null && prior != keyCallback) {
+							prior.invoke(window, key, scancode, action, mods);
+						}
+					} finally {
+						keyDepth--;
+					}
 				}
-				GLFWKeyCallbackI prior = previous[0];
-				if (prior != null) {
-					prior.invoke(window, key, scancode, action, mods);
+			};
+		}
+		if (charCallback == null) {
+			charCallback = new GLFWCharCallback() {
+				@Override
+				public void invoke(long window, int codepoint) {
+					if (charDepth > 0) {
+						return;
+					}
+					charDepth++;
+					try {
+						if (codepoint == '/' || (codepoint == '.' && slashDown(Minecraft.getInstance()))) {
+							arm = ARM_TICKS;
+							codepoint = '/';
+						}
+						GLFWCharCallbackI prior = charPrevious;
+						if (prior != null && prior != charCallback) {
+							prior.invoke(window, codepoint);
+						}
+					} finally {
+						charDepth--;
+					}
 				}
-			}
-		};
-		previous[0] = GLFW.glfwSetKeyCallback(handle, callback);
-		installed = true;
+			};
+		}
+		GLFWKeyCallbackI installedKey = GLFW.glfwSetKeyCallback(handle, keyCallback);
+		if (installedKey == null) {
+			GLFW.glfwSetKeyCallback(handle, null);
+		} else if (installedKey != keyCallback) {
+			keyPrevious = installedKey;
+		}
+		GLFWCharCallbackI installedChar = GLFW.glfwSetCharCallback(handle, charCallback);
+		if (installedChar == null) {
+			GLFW.glfwSetCharCallback(handle, null);
+		} else if (installedChar != charCallback) {
+			charPrevious = installedChar;
+		}
 	}
 
-	private static boolean keyDown(Minecraft client) {
+	private static void scanLayoutSlash() {
+		for (int key = GLFW.GLFW_KEY_SPACE; key <= GLFW.GLFW_KEY_LAST; key++) {
+			if ("/".equals(GLFW.glfwGetKeyName(key, 0))) {
+				layoutSlashKey = key;
+				return;
+			}
+		}
+	}
+
+	private static void ensureScreenHook() {
+		if (screenHook) {
+			return;
+		}
+		screenHook = true;
+		ScreenEvents.AFTER_INIT.register((client, screen, width, height) -> {
+			if (!(screen instanceof ChatScreen)) {
+				return;
+			}
+			ScreenEvents.afterTick(screen).register(open -> apply(client));
+			ScreenEvents.beforeExtract(screen).register((open, graphics, mouseX, mouseY, delta) -> {
+				ensureHooks(client);
+				apply(client);
+			});
+		});
+	}
+
+	private static boolean slashDown(Minecraft client) {
 		if (client.getWindow() == null) {
 			return false;
 		}
 		long handle = client.getWindow().handle();
-		return handle != 0L && GLFW.glfwGetKey(handle, GLFW.GLFW_KEY_SLASH) == GLFW.GLFW_PRESS;
+		if (handle == 0L) {
+			return false;
+		}
+		return GLFW.glfwGetKey(handle, GLFW.GLFW_KEY_SLASH) == GLFW.GLFW_PRESS
+				|| GLFW.glfwGetKey(handle, GLFW.GLFW_KEY_KP_DIVIDE) == GLFW.GLFW_PRESS
+				|| (layoutSlashKey != GLFW.GLFW_KEY_SLASH
+						&& GLFW.glfwGetKey(handle, layoutSlashKey) == GLFW.GLFW_PRESS);
 	}
 
 	private static EditBox chatInput(Minecraft client) {
-		if (!(ClientScreens.current(client) instanceof ChatScreen chat)) {
+		Screen screen = ClientScreens.current(client);
+		if (!(screen instanceof ChatScreen chat)) {
 			return null;
+		}
+		if (screen.getFocused() instanceof EditBox focused && focused.canConsumeInput()) {
+			return focused;
 		}
 		try {
 			Field field = inputField;
 			if (field == null) {
-				for (Field candidate : ChatScreen.class.getDeclaredFields()) {
-					if (candidate.getType() == EditBox.class) {
-						candidate.setAccessible(true);
-						field = candidate;
-						inputField = candidate;
-						break;
-					}
-				}
+				field = ChatScreen.class.getDeclaredField("input");
+				field.setAccessible(true);
+				inputField = field;
 			}
-			if (field == null) {
-				return null;
-			}
-			return (EditBox) field.get(chat);
-		} catch (IllegalAccessException e) {
+			Object value = field.get(chat);
+			return value instanceof EditBox box ? box : null;
+		} catch (ReflectiveOperationException | RuntimeException ignored) {
 			return null;
 		}
 	}

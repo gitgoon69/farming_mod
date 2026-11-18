@@ -27,7 +27,7 @@ import net.minecraft.world.phys.Vec3;
  */
 public final class OrbPlacerService {
 	public static final double RADIUS = 30.0;
-	public static final long DURATION_MS = 250_000L;
+	public static final long DURATION_MS = 300_000L;
 	private static final double RADIUS_SQR = RADIUS * RADIUS;
 	private static final int MAX_DROP = 4;
 	private static final int ARM_TICKS = 2;

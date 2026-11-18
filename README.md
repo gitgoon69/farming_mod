@@ -44,7 +44,7 @@ Java 25 required.
 ./gradlew.bat build "-Pmc=26.2"
 ```
 
-JAR: `build/libs/stook-1.0.32.jar` (26.1.2) and `stook-1.0.32-minecraft-26.2.jar` (26.2)
+JAR: `build/libs/stook-1.0.33.jar` (26.1.2) and `stook-1.0.33-minecraft-26.2.jar` (26.2)
 
 ## Updates
 

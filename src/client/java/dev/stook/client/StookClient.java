@@ -291,7 +291,7 @@ public class StookClient implements ClientModInitializer {
 								orbPlacer.reset();
 							}
 							feedback(ctx, config.autoOrb
-									? "Auto orb: ON (slot " + config.orbHotbarSlot + ", 30 blocks, 250s)."
+									? "Auto orb: ON (slot " + config.orbHotbarSlot + ", 30 blocks, 300s)."
 									: "Auto orb: OFF.");
 							return 1;
 						}))
