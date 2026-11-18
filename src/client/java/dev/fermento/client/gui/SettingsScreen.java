@@ -79,7 +79,7 @@ public final class SettingsScreen extends Screen {
 			PickaxeAbilityService pickaxe,
 			UpdateChecker updates
 	) {
-		super(Component.literal("Fermento"));
+		super(Component.literal("Stook"));
 		this.config = config;
 		this.tracker = tracker;
 		this.endstone = endstone;
@@ -178,7 +178,7 @@ public final class SettingsScreen extends Screen {
 		graphics.fill(px + SIDE, py + 39, px + SIDE + 1, py + PANEL_H - 22, 0x33FFD54A);
 
 		graphics.item(stack(Items.GOLDEN_HOE), px + 10, py + 10);
-		graphics.text(font, "Fermento", px + 32, py + 9, 0xFFFFD54A, true);
+		graphics.text(font, "Stook", px + 32, py + 9, 0xFFFFD54A, true);
 		graphics.text(font, "Garden · " + version() + " · " + minecraftVersion(), px + 32, py + 21, 0xFFB8C4A0, false);
 
 		Item[] crops = {Items.WHEAT, Items.CARROT, Items.POTATO, Items.NETHER_WART, Items.COCOA_BEANS, Items.GOLDEN_CARROT};
@@ -192,7 +192,7 @@ public final class SettingsScreen extends Screen {
 		drawContent(graphics, mouseX, mouseY);
 
 		graphics.fill(px, py + PANEL_H - 22, px + PANEL_W, py + PANEL_H, 0xFF10140E);
-		String hint = "Esc · scroll · /fermento";
+		String hint = "Esc · scroll · /stook";
 		graphics.text(font, hint, px + SIDE + 10, py + PANEL_H - 16, 0xFF8A9680, false);
 		if (toastTicks > 0 && !toast.isEmpty()) {
 			graphics.text(font, toast, px + PANEL_W - 12 - font.width(toast), py + PANEL_H - 16, 0xFFFFF176, true);
@@ -450,8 +450,8 @@ public final class SettingsScreen extends Screen {
 					updates.installNow();
 					ping("Installing…");
 				}));
-				rows.add(action("NPC sell", "In-game: /fermento sell <item> [times]", Items.EMERALD, () -> {
-					ping("/fermento sell <item>");
+				rows.add(action("NPC sell", "In-game: /stook sell <item> [times]", Items.EMERALD, () -> {
+					ping("/stook sell <item>");
 				}));
 				rows.add(action("Switch account", prismHint(), Items.PLAYER_HEAD, this::openAccountSwitch));
 			}

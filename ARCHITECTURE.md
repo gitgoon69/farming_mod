@@ -85,6 +85,5 @@ mod farming/
         └── resources/
             ├── fermento.client.mixins.json
             └── assets/fermento/lang/
-                ├── en_us.json
-                └── fr_fr.json
+                └── en_us.json
 ```

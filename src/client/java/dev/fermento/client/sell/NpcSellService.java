@@ -57,11 +57,11 @@ public final class NpcSellService {
 
 	public void start(String itemQuery) {
 		if (itemQuery == null || itemQuery.isBlank()) {
-			chat("Give an item name. Example: /fermento sell enchanted_wheat 5", ChatFormatting.RED);
+			chat("Give an item name. Example: /stook sell enchanted_wheat 5", ChatFormatting.RED);
 			return;
 		}
 		if (running()) {
-			chat("Sell already running. /fermento sell cancel to stop.", ChatFormatting.RED);
+			chat("Sell already running. /stook sell cancel to stop.", ChatFormatting.RED);
 			return;
 		}
 
@@ -74,7 +74,7 @@ public final class NpcSellService {
 
 		ParsedStart parsed = parseQuery(itemQuery.trim());
 		if (parsed.item().isBlank()) {
-			chat("Give an item name. Example: /fermento sell enchanted_wheat 5", ChatFormatting.RED);
+			chat("Give an item name. Example: /stook sell enchanted_wheat 5", ChatFormatting.RED);
 			return;
 		}
 
@@ -315,7 +315,7 @@ public final class NpcSellService {
 			return;
 		}
 		client.player.sendSystemMessage(
-				Component.literal("[Fermento] " + message).withStyle(color)
+				Component.literal("[Stook] " + message).withStyle(color)
 		);
 	}
 

@@ -104,7 +104,7 @@ public final class PickaxeAbilityService {
 			return;
 		}
 		String text = strip(raw);
-		if (text.startsWith("[Fermento]")) {
+		if (text.regionMatches(true, 0, "[Stook]", 0, 7)) {
 			return;
 		}
 		Matcher used = ABILITY_USED.matcher(text);

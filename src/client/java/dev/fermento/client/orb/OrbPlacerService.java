@@ -77,7 +77,7 @@ public final class OrbPlacerService {
 			return;
 		}
 		String text = strip(raw).toLowerCase(Locale.ROOT);
-		if (text.startsWith("[fermento]")) {
+		if (text.startsWith("[stook]")) {
 			return;
 		}
 		if (text.contains("not enough mana")

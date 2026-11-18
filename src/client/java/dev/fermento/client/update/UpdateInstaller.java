@@ -86,7 +86,7 @@ public final class UpdateInstaller {
 		Files.createDirectories(destination.getParent());
 		HttpRequest request = HttpRequest.newBuilder(URI.create(jarUrl))
 				.timeout(Duration.ofMinutes(2))
-				.header("User-Agent", "Fermento-Updater")
+				.header("User-Agent", "Stook-Updater")
 				.GET()
 				.build();
 		HttpResponse<Path> response = http.send(request, HttpResponse.BodyHandlers.ofFile(destination));
@@ -479,7 +479,7 @@ public final class UpdateInstaller {
 			Process process = new ProcessBuilder(
 					"cmd.exe",
 					"/c",
-					"start \"FermentoUpdate\" /min powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "
+					"start \"StookUpdate\" /min powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "
 							+ quoteWindowsArg(script))
 					.directory(workDir.toFile())
 					.redirectOutput(ProcessBuilder.Redirect.DISCARD)

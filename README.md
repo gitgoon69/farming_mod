@@ -1,10 +1,10 @@
-# Fermento
+# Stook
 
 <p align="center">
-  <img src="logo.png" width="192" alt="Fermento — pièce d'or et blé du Garden">
+  <img src="logo.png" width="192" alt="Stook — gold coin and Garden wheat">
 </p>
 
-Client-only Fabric mod for SkyBlock Garden. Named after the endgame farming armor.
+Client-only Fabric mod for SkyBlock Garden and mining.
 
 ## Download
 
@@ -22,18 +22,18 @@ In-game auto-install only downloads the JAR that matches your Minecraft version.
 ## Features
 
 - Coins/hour HUD (NPC crop prices + Garden pest drops, and End Stone mining)
-- In-game menu (`/fermento`, `/fmt`, or `/fprofit`): every option, vanilla item icons
+- In-game menu (`/stook`, `/fermento`, `/fmt`, or `/fprofit`): every option, vanilla item icons
 - Mature crop hitboxes = 1 block
 - Visitor's Logbook: unique served
 - Pest / Farm loadout via fishing rod
 - Pest cooldown alert (tab list, at 2m50, 5s countdown)
 - Auto Pest loadout at 2m50, Farm 0.5–1s after spawn
-- NPC sell (`/fermento sell`)
+- NPC sell (`/stook sell`)
 - Switch account from the title screen, pause menu, or Sys tab (Prism accounts in one click)
 
 ## Commands
 
-See [`COMMANDS.md`](COMMANDS.md). Commands start with `/fermento` (aliases: `/fmt`, `/fprofit`).
+See [`COMMANDS.md`](COMMANDS.md). Commands start with `/stook` (aliases: `/fermento`, `/fmt`, `/fprofit`).
 
 ## Build
 
@@ -44,7 +44,7 @@ Java 25 required.
 ./gradlew.bat build "-Pmc=26.2"
 ```
 
-JAR: `build/libs/fermento-1.0.30.jar` (26.1.2) and `fermento-1.0.30-minecraft-26.2.jar` (26.2)
+JAR: `build/libs/fermento-1.0.31.jar` (26.1.2) and `fermento-1.0.31-minecraft-26.2.jar` (26.2)
 
 ## Updates
 

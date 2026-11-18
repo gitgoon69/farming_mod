@@ -107,7 +107,7 @@ public final class PestLoadoutService {
 			return;
 		}
 		String text = strip(raw);
-		if (text.startsWith("[Fermento]")) {
+		if (text.regionMatches(true, 0, "[Stook]", 0, 7)) {
 			return;
 		}
 		if (!PEST_SPAWN.matcher(text).find()) {
@@ -456,7 +456,7 @@ public final class PestLoadoutService {
 			return;
 		}
 		client.player.sendSystemMessage(
-				Component.literal("[Fermento] " + message).withStyle(color)
+				Component.literal("[Stook] " + message).withStyle(color)
 		);
 	}
 }

@@ -1,6 +1,6 @@
-# Fermento — Commands
+# Stook — Commands
 
-Every command starts with **`/fermento`**. Aliases: **`/fmt`**, **`/fprofit`**.
+Every command starts with **`/stook`**. Aliases: **`/fermento`**, **`/fmt`**, **`/fprofit`**.
 
 ## In-game menu
 
@@ -8,15 +8,15 @@ Every option (HUD, hitbox, pest, pickaxe, pack, updates) lives in one screen, wi
 
 | Command | Description |
 | --- | --- |
-| `/fermento` | Opens the menu |
-| `/fermento menu` | Opens the menu |
-| Keybind `Open Fermento menu` | Shortcut (unbound by default, Controls) |
+| `/stook` | Opens the menu |
+| `/stook menu` | Opens the menu |
+| Keybind `Open Stook menu` | Shortcut (unbound by default, Controls) |
 
 ## Help
 
 | Command | Description |
 | --- | --- |
-| `/fermento help` | Prints chat help |
+| `/stook help` | Prints chat help |
 
 ## HUD (coins / hour)
 
@@ -24,29 +24,29 @@ The HUD shows when a **farming tool** is in hand, or while you are in **The End*
 
 | Command | Description |
 | --- | --- |
-| `/fermento toggle` | Enable or disable the HUD |
-| `/fermento hitbox` | 1-block hitbox when mature, lowest otherwise (cocoa included) |
-| `/fermento reset` | Reset the farm session (counter, time, profit) |
-| `/fermento prices` | Refresh Cofl Bazaar prices (pest loot: Dung, Compost…) |
-| `/fermento update` | Check GitHub for a new version |
-| `/fermento update install` | Download the JAR, close Minecraft, and relaunch |
-| `/fermento mode OFFER` | Pest loot **sell offer** (crops always use NPC) |
-| `/fermento mode INSTANT` | Pest loot **instant sell** (crops always use NPC) |
+| `/stook toggle` | Enable or disable the HUD |
+| `/stook hitbox` | 1-block hitbox when mature, lowest otherwise (cocoa included) |
+| `/stook reset` | Reset the farm session (counter, time, profit) |
+| `/stook prices` | Refresh Cofl Bazaar prices (pest loot: Dung, Compost…) |
+| `/stook update` | Check GitHub for a new version |
+| `/stook update install` | Download the JAR, close Minecraft, and relaunch |
+| `/stook mode OFFER` | Pest loot **sell offer** (crops always use NPC) |
+| `/stook mode INSTANT` | Pest loot **instant sell** (crops always use NPC) |
 
 ## HUD position
 
 | Command | Description |
 | --- | --- |
-| `/fermento move` | Open the editor: drag the HUD, arrows (Shift = 10 px), Esc / Done |
-| `/fermento move <x> <y>` | Place the HUD at the given coordinates |
-| `/fermento move reset` | Reset the HUD to `x=8` `y=48` |
+| `/stook move` | Open the editor: drag the HUD, arrows (Shift = 10 px), Esc / Done |
+| `/stook move <x> <y>` | Place the HUD at the given coordinates |
+| `/stook move reset` | Reset the HUD to `x=8` `y=48` |
 
 Examples:
 
 ```
-/fermento move
-/fermento move 20 80
-/fermento move reset
+/stook move
+/stook move 20 80
+/stook move reset
 ```
 
 ## Visitor's Logbook
@@ -62,7 +62,7 @@ In **Visitor's Logbook**, an overlay on the right shows **Unique served** (visit
 
 | Command | Description |
 | --- | --- |
-| `/fermento hitbox` | Enable or disable (default: on) |
+| `/stook hitbox` | Enable or disable (default: on) |
 
 ## Pest loadout (fishing rod)
 
@@ -73,11 +73,11 @@ Right-click with a **fishing rod**:
 
 | Command | Description |
 | --- | --- |
-| `/fermento pest` | Toggle Pest / Farm (same as the rod) |
-| `/fermento pestalert` | Enable or disable the pest cooldown alert (tab) |
-| `/fermento pestauto` | Auto Pest loadout at 2m50, /setspawn on spawn, Farm 0.5–1s later |
-| `/fermento pickaxe` | Auto pickaxe ability (right-click when cooldown hits 0) |
-| `/fermento serverpack` | server pack at lowest priority (default: ON) |
+| `/stook pest` | Toggle Pest / Farm (same as the rod) |
+| `/stook pestalert` | Enable or disable the pest cooldown alert (tab) |
+| `/stook pestauto` | Auto Pest loadout at 2m50, /setspawn on spawn, Farm 0.5–1s later |
+| `/stook pickaxe` | Auto pickaxe ability (right-click when cooldown hits 0) |
+| `/stook serverpack` | server pack at lowest priority (default: ON) |
 
 Names in `fermento.json`: `pestLoadoutName` (default `Pest`), `farmLoadoutName` (default `Farm`).
 
@@ -89,7 +89,7 @@ The Pests widget must be enabled: `/widget` → Pests.
 
 | Command | Description |
 | --- | --- |
-| `/fermento pestalert` | Enable or disable the alert (default: ON) |
+| `/stook pestalert` | Enable or disable the alert (default: ON) |
 
 Settings in `fermento.json`: `pestCooldownAlertAtSeconds` (default `170` = 2m50), `pestCooldownAlertCountdown` (default `5`).
 
@@ -97,7 +97,7 @@ At **2m50**, if `autoPestLoadout` is ON, the mod equips the **Pest** loadout. On
 
 | Command | Description |
 | --- | --- |
-| `/fermento pestauto` | Enable or disable auto switch (default: ON) |
+| `/stook pestauto` | Enable or disable auto switch (default: ON) |
 
 ## Auto pickaxe ability (mining)
 
@@ -105,7 +105,7 @@ When pickaxe ability cooldown hits **0** (item overlay / chat *You used your …
 
 | Command | Description |
 | --- | --- |
-| `/fermento pickaxe` | Enable or disable (default: ON) |
+| `/stook pickaxe` | Enable or disable (default: ON) |
 
 ## End Stone profit
 
@@ -115,16 +115,16 @@ Profit follows SkyHanni's gemstone coins/hour: items that land in **sacks** (hov
 
 Until a sack message arrives, coins/hour is a pace: blocks you break × `(1 + (Mining Fortune + Block Fortune) / 100)`. Fortune is read from the tab stats. That pace does not include Mining Spread; the sack total does.
 
-`/fermento mode OFFER|INSTANT` applies to End Stone and pest loot. Crops stay NPC. `/fermento reset` clears both sessions.
+`/stook mode OFFER|INSTANT` applies to End Stone and pest loot. Crops stay NPC. `/stook reset` clears both sessions.
 
 | Command | Description |
 | --- | --- |
-| `/fermento endstone` | Enable or disable End Stone profit (default: ON) |
+| `/stook endstone` | Enable or disable End Stone profit (default: ON) |
 
 
 | Command | Description |
 | --- | --- |
-| `/fermento serverpack` | Enable or disable low priority (default: ON) |
+| `/stook serverpack` | Enable or disable low priority (default: ON) |
 
 With **Polar**, these mixins (pack + crop hitboxes) are disabled: Polar hooks the same methods natively, which crashed Windows (`ntdll`). HUD, pest, sell, and logbook stay active.
 
@@ -136,19 +136,19 @@ An active **Booster Cookie** is required.
 
 | Command | Description |
 | --- | --- |
-| `/fermento sell <item>` | 1 round: `/gfs <item> 9999` → cookie menu → sell |
-| `/fermento sell <item> <times>` | Repeat the cycle `<times>` times (1–999) |
-| `/fermento sell cancel` | Cancel the current sell |
+| `/stook sell <item>` | 1 round: `/gfs <item> 9999` → cookie menu → sell |
+| `/stook sell <item> <times>` | Repeat the cycle `<times>` times (1–999) |
+| `/stook sell cancel` | Cancel the current sell |
 
 Stops automatically after **3 empty rounds** in a row.
 
 Examples:
 
 ```
-/fermento sell enchanted_wheat
-/fermento sell enchanted_wheat 10
-/fermento sell enchanted wheat 5
-/fermento sell cancel
+/stook sell enchanted_wheat
+/stook sell enchanted_wheat 10
+/stook sell enchanted wheat 5
+/stook sell cancel
 ```
 
 Only the named item is sold. Other inventory slots are not clicked.
@@ -168,14 +168,14 @@ Windows locks the JAR while Minecraft is running, which is why the game is close
 
 | Command | Description |
 | --- | --- |
-| `/fermento update` | Run the GitHub check again |
-| `/fermento update install` | Install the matching JAR, close the game, and relaunch |
+| `/stook update` | Run the GitHub check again |
+| `/stook update install` | Install the matching JAR, close the game, and relaunch |
 
 Disable with `"checkUpdates": false` in `fermento.json`.
 
 ## Switch account
 
-From the **title screen**, the **pause menu** (top-right button), or Fermento **Sys → Switch account**.
+From the **title screen**, the **pause menu** (top-right button), or Stook **Sys → Switch account**.
 
 The mod reads Microsoft accounts from common launchers (Prism / PolyMC / MultiMC, official `launcher_accounts.json`, Modrinth `minecraft_auth.json`, ATLauncher, GDLauncher) and from the **current in-game session** (any launcher). Click one to switch without copying a token.
 
@@ -185,4 +185,4 @@ Otherwise, paste a Minecraft access token. The token is checked with Minecraft S
 
 Settings (HUD, position, price mode, crop hitboxes) are saved in:
 
-`.minecraft/config/fermento.json`
+`.minecraft/config/stook.json`

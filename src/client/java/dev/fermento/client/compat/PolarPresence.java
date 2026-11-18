@@ -21,7 +21,7 @@ public final class PolarPresence {
 
 	static {
 		if (PRESENT) {
-			LOGGER.warn("Polar detected: all Fermento mixins are disabled (avoids the ntdll crash).");
+			LOGGER.warn("Polar detected: all Stook mixins are disabled (avoids the ntdll crash).");
 		}
 	}
 

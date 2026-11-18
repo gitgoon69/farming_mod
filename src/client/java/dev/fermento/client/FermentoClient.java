@@ -196,12 +196,12 @@ public class FermentoClient implements ClientModInitializer {
 		});
 
 		ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
-			for (String name : List.of("fermento", "fmt", "fprofit")) {
+			for (String name : List.of("stook", "fermento", "fmt", "fprofit")) {
 				dispatcher.register(command(name));
 			}
 		});
 
-		FermentoMod.LOGGER.info("Fermento client ready. Command: /fermento");
+		FermentoMod.LOGGER.info("Stook client ready. Command: /stook");
 	}
 
 	private static LiteralArgumentBuilder<FabricClientCommandSource> command(String name) {
@@ -372,7 +372,7 @@ public class FermentoClient implements ClientModInitializer {
 
 	private static int openSettings(CommandContext<FabricClientCommandSource> ctx) {
 		openMenu(ctx.getSource().getClient());
-		feedback(ctx, "Fermento menu.");
+		feedback(ctx, "Stook menu.");
 		return 1;
 	}
 
@@ -389,7 +389,7 @@ public class FermentoClient implements ClientModInitializer {
 	}
 
 	private static int help(CommandContext<FabricClientCommandSource> ctx) {
-		ctx.getSource().sendFeedback(Component.literal("Fermento — /fermento (menu) | menu | sell <item> [times] | pest | pestauto | pestalert | orb | pickaxe | endstone | serverpack | update [install] | sell cancel | move [x y|reset] | reset | toggle | hitbox | prices | mode <OFFER|INSTANT>").withStyle(ChatFormatting.GOLD));
+		ctx.getSource().sendFeedback(Component.literal("Stook — /stook (menu) | menu | sell <item> [times] | pest | pestauto | pestalert | orb | pickaxe | endstone | serverpack | update [install] | sell cancel | move [x y|reset] | reset | toggle | hitbox | prices | mode <OFFER|INSTANT>").withStyle(ChatFormatting.GOLD));
 		return 1;
 	}
 
@@ -398,6 +398,6 @@ public class FermentoClient implements ClientModInitializer {
 	}
 
 	private static void feedback(CommandContext<FabricClientCommandSource> ctx, String message) {
-		ctx.getSource().sendFeedback(Component.literal("[Fermento] " + message).withStyle(ChatFormatting.YELLOW));
+		ctx.getSource().sendFeedback(Component.literal("[Stook] " + message).withStyle(ChatFormatting.YELLOW));
 	}
 }

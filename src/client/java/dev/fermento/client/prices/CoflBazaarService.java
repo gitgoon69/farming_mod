@@ -164,7 +164,7 @@ public final class CoflBazaarService {
 		try {
 			HttpRequest request = HttpRequest.newBuilder(URI.create(SNAPSHOT.formatted(productId)))
 					.timeout(Duration.ofSeconds(15))
-					.header("User-Agent", "Fermento/" + FermentoMod.MOD_ID + " (Minecraft Fabric)")
+					.header("User-Agent", "Stook/" + FermentoMod.MOD_ID + " (Minecraft Fabric)")
 					.GET()
 					.build();
 			HttpResponse<String> response = http.send(request, HttpResponse.BodyHandlers.ofString());

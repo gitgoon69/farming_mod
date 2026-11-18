@@ -152,7 +152,7 @@ public final class UpdateChecker {
 					return;
 				}
 				if (!installing) {
-					FermentoMod.LOGGER.info("Fermento {} available (current {}), installing and relaunching",
+					FermentoMod.LOGGER.info("Stook {} available (current {}), installing and relaunching",
 							latest.version(), currentVersion());
 					installNow();
 				}
@@ -222,7 +222,7 @@ public final class UpdateChecker {
 	private HttpResponse<String> sendGet(String url) throws IOException, InterruptedException {
 		HttpRequest request = HttpRequest.newBuilder(URI.create(url))
 				.timeout(Duration.ofSeconds(15))
-				.header("User-Agent", "Fermento/" + currentVersion() + " (Minecraft Fabric)")
+				.header("User-Agent", "Stook/" + currentVersion() + " (Minecraft Fabric)")
 				.header("Accept", "application/vnd.github+json")
 				.GET()
 				.build();
@@ -397,13 +397,13 @@ public final class UpdateChecker {
 		Release release = latest;
 		boolean minecraft26_2 = runningMinecraft26_2();
 		String githubUrl = minecraft26_2 ? minecraft26_2PageUrl(release) : release.pageUrl();
-		client.player.sendSystemMessage(Component.literal("[Fermento] Update " + release.version()
+		client.player.sendSystemMessage(Component.literal("[Stook] Update " + release.version()
 				+ " available (current " + currentVersion() + ").").withStyle(ChatFormatting.GOLD));
 
 		String mc = runningMinecraftVersion();
 		MutableComponent line = Component.literal("[Install]")
 				.withStyle(style -> style
-						.withClickEvent(new ClickEvent.RunCommand("/fermento update install"))
+						.withClickEvent(new ClickEvent.RunCommand("/stook update install"))
 						.withHoverEvent(new HoverEvent.ShowText(Component.literal(
 								"Download the Minecraft " + mc + " JAR, close Minecraft, and relaunch")))
 						.withColor(ChatFormatting.GREEN)
@@ -412,7 +412,7 @@ public final class UpdateChecker {
 				.withStyle(style -> withLink(style, githubUrl).withColor(ChatFormatting.AQUA).withUnderlined(true)));
 		line = line.append(Component.literal("  [Check]")
 				.withStyle(style -> style
-						.withClickEvent(new ClickEvent.RunCommand("/fermento update"))
+						.withClickEvent(new ClickEvent.RunCommand("/stook update"))
 						.withHoverEvent(new HoverEvent.ShowText(Component.literal("Run the GitHub check again")))
 						.withColor(ChatFormatting.GRAY)
 						.withUnderlined(true)));
@@ -423,7 +423,7 @@ public final class UpdateChecker {
 		if (client == null || client.player == null) {
 			return;
 		}
-		client.player.sendSystemMessage(Component.literal("[Fermento] " + message).withStyle(color));
+		client.player.sendSystemMessage(Component.literal("[Stook] " + message).withStyle(color));
 	}
 
 	private static String rootMessage(Throwable error) {

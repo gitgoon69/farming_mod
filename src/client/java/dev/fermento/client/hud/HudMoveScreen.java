@@ -32,7 +32,7 @@ public class HudMoveScreen extends Screen {
 	}
 
 	public HudMoveScreen(ModConfig config, FarmingTracker tracker, CoflBazaarService prices, Screen parent) {
-		super(Component.literal("Move Fermento"));
+		super(Component.literal("Move Stook"));
 		this.config = config;
 		this.tracker = tracker;
 		this.prices = prices;

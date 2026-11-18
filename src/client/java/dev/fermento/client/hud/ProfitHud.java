@@ -101,7 +101,7 @@ public final class ProfitHud {
 
 	private static List<String> buildLines(FarmingTracker.Snapshot snap) {
 		List<String> lines = new ArrayList<>();
-		lines.add("Fermento");
+		lines.add("Stook");
 
 		if (snap.crop() == null) {
 			lines.add("Hold a crop hoe");
@@ -140,7 +140,7 @@ public final class ProfitHud {
 
 	private static List<String> buildEndstoneLines(EndstoneTracker.Snapshot snap) {
 		List<String> lines = new ArrayList<>();
-		lines.add("Fermento");
+		lines.add("Stook");
 		lines.add("End Stone" + (snap.paused() && snap.activeMs() > 0 ? "  (AFK)" : ""));
 		lines.add("Blocks: " + formatCount(snap.blocks()));
 		lines.add("Blocks/s: " + String.format(Locale.US, "%.1f", snap.blocksPerSecond()));

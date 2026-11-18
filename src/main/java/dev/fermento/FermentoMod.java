@@ -11,7 +11,7 @@ public class FermentoMod implements ModInitializer {
 
 	@Override
 	public void onInitialize() {
-		LOGGER.info("Fermento loaded.");
+		LOGGER.info("Stook loaded.");
 	}
 
 	public static Identifier id(String path) {

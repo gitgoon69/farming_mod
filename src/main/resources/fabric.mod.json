@@ -2,8 +2,8 @@
 	"schemaVersion": 1,
 	"id": "fermento",
 	"version": "${version}",
-	"name": "Fermento",
-	"description": "Garden coins/hour, pests, and Bazaar prices for SkyBlock. Named after the endgame farming set.",
+	"name": "Stook",
+	"description": "Garden coins/hour, pests, and Bazaar prices for SkyBlock.",
 	"icon": "assets/fermento/icon.png",
 	"authors": [
 		"matte"
