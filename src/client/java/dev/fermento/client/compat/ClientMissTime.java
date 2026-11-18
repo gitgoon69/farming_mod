@@ -2,10 +2,12 @@ package dev.fermento.client.compat;
 
 import java.lang.reflect.Field;
 
+import dev.fermento.FermentoMod;
 import net.minecraft.client.Minecraft;
 
 /**
- * {@code Minecraft.missTime} (26.1.2) or the equivalent field if moved in 26.2.
+ * {@code Minecraft.missTime} is protected on 26.1.2 and 26.2.
+ * A public-only lookup never sees it, so the post-menu attack delay stays stuck.
  */
 public final class ClientMissTime {
 	private static final Field FIELD = find();
@@ -14,7 +16,7 @@ public final class ClientMissTime {
 	}
 
 	public static void clear(Minecraft client) {
-		if (FIELD == null) {
+		if (FIELD == null || client == null) {
 			return;
 		}
 		try {
@@ -24,19 +26,18 @@ public final class ClientMissTime {
 	}
 
 	private static Field find() {
-		try {
-			return Minecraft.class.getField("missTime");
-		} catch (NoSuchFieldException ignored) {
-		}
-		for (String name : new String[] {"destroyDelay", "breakDelay"}) {
+		for (String name : new String[] {"missTime", "destroyDelay", "breakDelay"}) {
 			try {
-				Field field = Minecraft.class.getField(name);
-				if (field.getType() == int.class) {
-					return field;
+				Field field = Minecraft.class.getDeclaredField(name);
+				if (field.getType() != int.class) {
+					continue;
 				}
-			} catch (NoSuchFieldException ignored) {
+				field.setAccessible(true);
+				return field;
+			} catch (ReflectiveOperationException | RuntimeException ignored) {
 			}
 		}
+		FermentoMod.LOGGER.warn("Could not reach Minecraft.missTime; attack resume after a menu will stay delayed.");
 		return null;
 	}
 }

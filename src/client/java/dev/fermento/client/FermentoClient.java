@@ -165,6 +165,8 @@ public class FermentoClient implements ClientModInitializer {
 				pestLoadout.onChat(text);
 				tracker.onChat(text);
 				endstone.onChat(message);
+			} else {
+				endstone.onActionBar(text);
 			}
 			pickaxeAbility.onChat(text);
 			orbPlacer.onChat(text);

@@ -16,7 +16,10 @@ public final class MiningFortune {
 	private static final char LEGACY_CLOVER = '\u2618';
 
 	private static final Pattern NAMED = Pattern.compile(
-			"(?i)\\b(mining fortune|block fortune)\\b\\s*:?\\s*[^\\d]{0,6}([\\d,]{1,9})"
+			"(?i)\\b(mining fortune|block fortune)\\b\\s*:?\\s*[^\\d]{0,8}([\\d,]{1,9})"
+	);
+	private static final Pattern NAMED_LEADING = Pattern.compile(
+			"(?i)([\\d,]{1,9})\\s*[^\\d\\n]{0,8}\\b(mining fortune|block fortune)\\b"
 	);
 	private static final Pattern ICON_NUMBER = Pattern.compile(
 			"([\\d,]{1,9})\\s*(?:" + FORTUNE_ICON + "|" + LEGACY_CLOVER + ")"
@@ -70,37 +73,27 @@ public final class MiningFortune {
 				if (line == null || line.isEmpty()) {
 					continue;
 				}
-				Matcher named = NAMED.matcher(line);
-				while (named.find()) {
-					int value = parse(named.group(2));
-					if (value < 0) {
-						continue;
-					}
-					if (named.group(1).toLowerCase().startsWith("block")) {
-						block = value;
-						blockKnown = true;
-					} else {
-						mining = value;
-						miningKnown = true;
-					}
+				int[] parsed = readNamed(line);
+				if (parsed[0] >= 0) {
+					mining = parsed[0];
+					miningKnown = true;
+				}
+				if (parsed[1] >= 0) {
+					block = parsed[1];
+					blockKnown = true;
 				}
 			}
 		}
 
-		if (!miningKnown && actionBar != null && !actionBar.isEmpty()) {
-			Matcher named = NAMED.matcher(actionBar);
-			while (named.find()) {
-				int value = parse(named.group(2));
-				if (value < 0) {
-					continue;
-				}
-				if (named.group(1).toLowerCase().startsWith("block")) {
-					block = value;
-					blockKnown = true;
-				} else {
-					mining = value;
-					miningKnown = true;
-				}
+		if (actionBar != null && !actionBar.isEmpty()) {
+			int[] parsed = readNamed(actionBar);
+			if (!miningKnown && parsed[0] >= 0) {
+				mining = parsed[0];
+				miningKnown = true;
+			}
+			if (!blockKnown && parsed[1] >= 0) {
+				block = parsed[1];
+				blockKnown = true;
 			}
 			if (!miningKnown) {
 				Matcher icon = ICON_NUMBER.matcher(actionBar);
@@ -119,6 +112,37 @@ public final class MiningFortune {
 			return Reading.NONE;
 		}
 		return new Reading(mining, block, miningKnown, blockKnown);
+	}
+
+	/** @return {@code [mining, block]}, {@code -1} when that stat was not on the line. */
+	private static int[] readNamed(String line) {
+		int mining = -1;
+		int block = -1;
+		Matcher named = NAMED.matcher(line);
+		while (named.find()) {
+			int value = parse(named.group(2));
+			if (value < 0) {
+				continue;
+			}
+			if (named.group(1).toLowerCase().startsWith("block")) {
+				block = value;
+			} else {
+				mining = value;
+			}
+		}
+		Matcher leading = NAMED_LEADING.matcher(line);
+		while (leading.find()) {
+			int value = parse(leading.group(1));
+			if (value < 0) {
+				continue;
+			}
+			if (leading.group(2).toLowerCase().startsWith("block")) {
+				block = value;
+			} else {
+				mining = value;
+			}
+		}
+		return new int[] {mining, block};
 	}
 
 	private static int parse(String raw) {

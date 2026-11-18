@@ -162,6 +162,11 @@ public final class ProfitHud {
 		String priceTag = priceTag(snap);
 		if (snap.coinsPerHour() > 0) {
 			String via = snap.rateSource().isEmpty() ? priceTag : snap.rateSource();
+			if ("loot".equals(via)) {
+				via = "loot " + priceTag;
+			} else if ("fortune".equals(via) || "blocks".equals(via)) {
+				via = "est.";
+			}
 			lines.add("Coins/h: " + formatCoins(snap.coinsPerHour()) + "  (" + via + ")");
 		} else {
 			lines.add("Coins/h: breaking…");
