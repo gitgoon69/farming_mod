@@ -1,6 +1,6 @@
 # Stook — Commands
 
-Every command starts with **`/stook`**. Aliases: **`/fermento`**, **`/fmt`**, **`/fprofit`**.
+Every command starts with **`/stook`**. Aliases: **`/fmt`**, **`/fprofit`**.
 
 ## In-game menu
 
@@ -79,7 +79,7 @@ Right-click with a **fishing rod**:
 | `/stook pickaxe` | Auto pickaxe ability (right-click when cooldown hits 0) |
 | `/stook serverpack` | server pack at lowest priority (default: ON) |
 
-Names in `fermento.json`: `pestLoadoutName` (default `Pest`), `farmLoadoutName` (default `Farm`).
+Names in `stook.json`: `pestLoadoutName` (default `Pest`), `farmLoadoutName` (default `Farm`).
 
 ## Pest cooldown alert (tab)
 
@@ -91,7 +91,7 @@ The Pests widget must be enabled: `/widget` → Pests.
 | --- | --- |
 | `/stook pestalert` | Enable or disable the alert (default: ON) |
 
-Settings in `fermento.json`: `pestCooldownAlertAtSeconds` (default `170` = 2m50), `pestCooldownAlertCountdown` (default `5`).
+Settings in `stook.json`: `pestCooldownAlertAtSeconds` (default `170` = 2m50), `pestCooldownAlertCountdown` (default `5`).
 
 At **2m50**, if `autoPestLoadout` is ON, the mod equips the **Pest** loadout. On spawn it sends `/setspawn`, then **0.5–1s later** it switches back to **Farm**.
 
@@ -157,8 +157,8 @@ Only the named item is sold. Other inventory slots are not clicked.
 
 When the game starts (and again on login if needed), the mod checks GitHub for **the same Minecraft version** you are running.
 
-- **26.1.2** → GitHub **Latest** (`fermento-x.y.z.jar`)
-- **26.2** → GitHub **Minecraft 26.2** release (`fermento-x.y.z-minecraft-26.2.jar`)
+- **26.1.2** → GitHub **Latest** (`stook-x.y.z.jar`)
+- **26.2** → GitHub **Minecraft 26.2** release (`stook-x.y.z-minecraft-26.2.jar`)
 
 If a newer JAR exists, it is downloaded into `mods/`, Minecraft closes, the old file is replaced, and **the same game process is started again**. No click on **[Install]** is required.
 
@@ -171,7 +171,7 @@ Windows locks the JAR while Minecraft is running, which is why the game is close
 | `/stook update` | Run the GitHub check again |
 | `/stook update install` | Install the matching JAR, close the game, and relaunch |
 
-Disable with `"checkUpdates": false` in `fermento.json`.
+Disable with `"checkUpdates": false` in `stook.json`.
 
 ## Switch account
 

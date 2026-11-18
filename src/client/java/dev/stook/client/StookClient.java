@@ -1,0 +1,403 @@
+package dev.stook.client;
+
+import static net.fabricmc.fabric.api.client.command.v2.ClientCommands.argument;
+import static net.fabricmc.fabric.api.client.command.v2.ClientCommands.literal;
+
+import java.util.List;
+
+import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.context.CommandContext;
+
+import dev.stook.StookMod;
+import dev.stook.client.account.GameMenuAccountButton;
+import dev.stook.client.compat.ClientScreens;
+import dev.stook.client.compat.SlashChatFix;
+import dev.stook.client.config.ModConfig;
+import dev.stook.client.garden.Crop;
+import dev.stook.client.garden.FarmingTracker;
+import dev.stook.client.garden.GardenDetector;
+import dev.stook.client.garden.PestCooldownTracker;
+import dev.stook.client.garden.VisitorLogbookStats;
+import dev.stook.client.gui.SettingsScreen;
+import dev.stook.client.hud.HudMoveScreen;
+import dev.stook.client.hud.PestCooldownAlertHud;
+import dev.stook.client.hud.PickaxeAbilityHud;
+import dev.stook.client.hud.PestModeHud;
+import dev.stook.client.hud.ProfitHud;
+import dev.stook.client.loadout.PestLoadoutService;
+import dev.stook.client.mining.EndstoneTracker;
+import dev.stook.client.mining.PickaxeAbilityService;
+import dev.stook.client.orb.OrbPlacerService;
+import dev.stook.client.prices.CoflBazaarService;
+import dev.stook.client.sell.NpcSellService;
+import dev.stook.client.update.UpdateChecker;
+import dev.stook.client.usage.UsagePingService;
+import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
+import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
+import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
+import net.fabricmc.fabric.api.event.client.player.ClientPlayerBlockBreakEvents;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.KeyMapping;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.network.chat.Component;
+import org.lwjgl.glfw.GLFW;
+
+public class StookClient implements ClientModInitializer {
+	private static ModConfig config;
+	private static FarmingTracker tracker;
+	private static EndstoneTracker endstone;
+	private static CoflBazaarService prices;
+	private static NpcSellService npcSell;
+	private static PestLoadoutService pestLoadout;
+	private static PickaxeAbilityService pickaxeAbility;
+	private static OrbPlacerService orbPlacer;
+	private static PestCooldownTracker pestCooldown;
+	private static UpdateChecker updates;
+	private static UsagePingService usagePing;
+	private static KeyMapping openMenuKey;
+
+	@Override
+	public void onInitializeClient() {
+		config = ModConfig.load();
+		tracker = new FarmingTracker();
+		endstone = new EndstoneTracker();
+		prices = new CoflBazaarService();
+		prices.start();
+		npcSell = new NpcSellService();
+		pestLoadout = new PestLoadoutService(config);
+		pickaxeAbility = new PickaxeAbilityService(config);
+		orbPlacer = new OrbPlacerService(config);
+		pestCooldown = new PestCooldownTracker();
+		updates = new UpdateChecker();
+		ClientLifecycleEvents.CLIENT_STARTED.register(client -> {
+			if (config.checkUpdates) {
+				updates.onGameStart();
+			}
+		});
+		usagePing = new UsagePingService();
+		GameMenuAccountButton.register();
+		openMenuKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
+				"key.stook.open",
+				GLFW.GLFW_KEY_UNKNOWN,
+				KeyMapping.Category.MISC
+		));
+
+		HudElementRegistry.attachElementBefore(
+				VanillaHudElements.CHAT,
+				StookMod.id("profit_hud"),
+				(graphics, delta) -> ProfitHud.render(graphics, delta, config, tracker, endstone, prices)
+		);
+		HudElementRegistry.attachElementBefore(
+				VanillaHudElements.CHAT,
+				StookMod.id("pest_mode"),
+				(graphics, delta) -> PestModeHud.render(graphics, delta, config, pestLoadout)
+		);
+		HudElementRegistry.addLast(
+				StookMod.id("pest_cooldown_alert"),
+				(graphics, delta) -> PestCooldownAlertHud.render(graphics, delta, config, pestCooldown)
+		);
+		HudElementRegistry.addLast(
+				StookMod.id("pickaxe_ability"),
+				(graphics, delta) -> PickaxeAbilityHud.render(graphics, delta, pickaxeAbility)
+		);
+
+		ScreenEvents.AFTER_INIT.register((client, screen, width, height) -> {
+			if (!(screen instanceof AbstractContainerScreen<?>)) {
+				return;
+			}
+			ScreenEvents.afterExtract(screen).register((openScreen, graphics, mouseX, mouseY, tickProgress) -> {
+				if (openScreen instanceof AbstractContainerScreen<?> container) {
+					VisitorLogbookStats.render(container, graphics);
+				}
+			});
+		});
+
+		ClientTickEvents.END_CLIENT_TICK.register(client -> {
+			SlashChatFix.tick(client);
+			if (openMenuKey.consumeClick()) {
+				if (ClientScreens.current(client) instanceof SettingsScreen) {
+					ClientScreens.close(client);
+				} else if (!ClientScreens.isOpen(client)) {
+					openMenu(client);
+				}
+			}
+			GardenDetector.tick(client);
+			tracker.tick(client, config);
+			endstone.tick(client, config);
+			prices.tick();
+			npcSell.tick(client);
+			VisitorLogbookStats.tick(client);
+			pestCooldown.tick(client, config);
+			if (pestCooldown.consumeAlertTrigger()) {
+				pestLoadout.onPestAlert();
+			}
+			pestLoadout.tick(client);
+			boolean inventoryFree = !pestLoadout.running() && !npcSell.running();
+			orbPlacer.tick(client, inventoryFree);
+			if (inventoryFree && !orbPlacer.busy()) {
+				pickaxeAbility.tick(client);
+			}
+			updates.tick(client);
+		});
+
+		ClientPlayerBlockBreakEvents.AFTER.register((world, player, pos, state) -> {
+			Crop crop = Crop.fromBlock(state.getBlock());
+			if (crop != null) {
+				tracker.onBlockBroken(crop);
+			}
+			endstone.onBlockBroken(pos, state.getBlock());
+		});
+
+		ClientReceiveMessageEvents.GAME.register((message, overlay) -> {
+			String text = message.getString();
+			if (!overlay) {
+				pestLoadout.onChat(text);
+				tracker.onChat(text);
+				endstone.onChat(message);
+			} else {
+				endstone.onActionBar(text);
+			}
+			pickaxeAbility.onChat(text);
+			orbPlacer.onChat(text);
+		});
+
+		ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
+			if (config.checkUpdates) {
+				updates.onJoin();
+			}
+			if (config.usagePing) {
+				usagePing.onJoin();
+			}
+		});
+
+		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
+			GardenDetector.reset();
+			tracker.resetSession();
+			endstone.reset();
+			VisitorLogbookStats.reset();
+			pestLoadout.resetSession();
+			pickaxeAbility.reset();
+			orbPlacer.reset();
+			pestCooldown.reset();
+			if (npcSell.running()) {
+				npcSell.cancel();
+			}
+		});
+
+		ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
+			for (String name : List.of("stook", "fmt", "fprofit")) {
+				dispatcher.register(command(name));
+			}
+		});
+
+		StookMod.LOGGER.info("Stook client ready. Command: /stook");
+	}
+
+	private static LiteralArgumentBuilder<FabricClientCommandSource> command(String name) {
+		return literal(name)
+						.executes(StookClient::openSettings)
+						.then(literal("menu").executes(StookClient::openSettings))
+						.then(literal("reset").executes(ctx -> {
+							tracker.resetSession();
+							endstone.reset();
+							feedback(ctx, "Session reset.");
+							return 1;
+						}))
+						.then(literal("endstone").executes(ctx -> {
+							config.endstoneProfit = !config.endstoneProfit;
+							config.save();
+							if (!config.endstoneProfit) {
+								endstone.reset();
+							}
+							feedback(ctx, config.endstoneProfit
+									? "End Stone profit: ON (sacks, else fortune)."
+									: "End Stone profit: OFF.");
+							return 1;
+						}))
+						.then(literal("toggle").executes(ctx -> {
+							config.hudEnabled = !config.hudEnabled;
+							config.save();
+							feedback(ctx, config.hudEnabled ? "HUD enabled." : "HUD disabled.");
+							return 1;
+						}))
+						.then(literal("hitbox").executes(ctx -> {
+							config.fullCropHitboxes = !config.fullCropHitboxes;
+							config.save();
+							feedback(ctx, config.fullCropHitboxes
+									? "Crop hitboxes: 1 block when mature, lowest otherwise (cocoa included)."
+									: "Vanilla crop hitboxes.");
+							return 1;
+						}))
+						.then(literal("pest").executes(ctx -> {
+							if (pestLoadout.running()) {
+								pestLoadout.cancel();
+								feedback(ctx, "Loadout switch cancelled.");
+								return 1;
+							}
+							if (pestLoadout.pestMode()) {
+								feedback(ctx, "Opening /loadout → " + config.farmLoadoutName + "...");
+							} else {
+								feedback(ctx, "Opening /loadout → " + config.pestLoadoutName + "...");
+							}
+							pestLoadout.startFromCommand();
+							return 1;
+						}))
+						.then(literal("pestalert").executes(ctx -> {
+							config.pestCooldownAlert = !config.pestCooldownAlert;
+							config.save();
+							feedback(ctx, config.pestCooldownAlert
+									? "Pest cooldown alert: ON (at 2m50, 5s countdown)."
+									: "Pest cooldown alert: OFF.");
+							return 1;
+						}))
+						.then(literal("pestauto").executes(ctx -> {
+							config.autoPestLoadout = !config.autoPestLoadout;
+							config.save();
+							if (!config.autoPestLoadout) {
+								pestLoadout.cancelPendingAuto();
+							}
+							feedback(ctx, config.autoPestLoadout
+									? "Auto loadout: ON (Pest at 2m50, /setspawn on spawn, Farm 0.5–1s later)."
+									: "Auto loadout: OFF.");
+							return 1;
+						}))
+						.then(literal("serverpack").executes(ctx -> {
+							config.hideServerResourcePack = !config.hideServerResourcePack;
+							config.save();
+							Minecraft client = ctx.getSource().getClient();
+							if (config.hideServerResourcePack) {
+								client.reloadResourcePacks();
+								feedback(ctx, "Hypixel server pack: last (vanilla and your packs take priority).");
+							} else {
+								feedback(ctx, "Hypixel server pack: normal priority. Reconnect to put it back on top.");
+							}
+							return 1;
+						}))
+						.then(literal("orb").executes(ctx -> {
+							config.autoOrb = !config.autoOrb;
+							config.save();
+							if (!config.autoOrb) {
+								orbPlacer.reset();
+							}
+							feedback(ctx, config.autoOrb
+									? "Auto orb: ON (slot " + config.orbHotbarSlot + ", 30 blocks, 250s)."
+									: "Auto orb: OFF.");
+							return 1;
+						}))
+						.then(literal("pickaxe").executes(ctx -> {
+							config.autoPickaxeAbility = !config.autoPickaxeAbility;
+							config.save();
+							if (!config.autoPickaxeAbility) {
+								pickaxeAbility.reset();
+							}
+							feedback(ctx, config.autoPickaxeAbility
+									? "Auto pickaxe ability: ON (right-click when cooldown hits 0)."
+									: "Auto pickaxe ability: OFF.");
+							return 1;
+						}))
+						.then(literal("update")
+								.executes(ctx -> {
+									if (!config.checkUpdates) {
+										feedback(ctx, "Update check disabled (checkUpdates in stook.json).");
+										return 0;
+									}
+									updates.refreshNow();
+									feedback(ctx, "Checking GitHub…");
+									return 1;
+								})
+								.then(literal("install").executes(ctx -> {
+									if (!config.checkUpdates) {
+										feedback(ctx, "Update check disabled (checkUpdates in stook.json).");
+										return 0;
+									}
+									updates.installNow();
+									return 1;
+								})))
+						.then(literal("prices").executes(ctx -> {
+							prices.refreshNow();
+							feedback(ctx, "Refreshing Cofl prices...");
+							return 1;
+						}))
+						.then(literal("mode")
+								.then(argument("type", StringArgumentType.word()).executes(ctx -> {
+									String type = StringArgumentType.getString(ctx, "type").toUpperCase();
+									if (!type.equals("OFFER") && !type.equals("INSTANT")) {
+										feedback(ctx, "Use OFFER (sell offer) or INSTANT (instant sell).");
+										return 0;
+									}
+									config.priceMode = type;
+									config.save();
+									feedback(ctx, "Price mode: " + type);
+									return 1;
+								})))
+						.then(literal("move")
+								.executes(StookClient::openMoveScreen)
+								.then(literal("reset").executes(ctx -> {
+									config.hudX = 8;
+									config.hudY = 48;
+									config.save();
+									feedback(ctx, "HUD reset to x=8 y=48.");
+									return 1;
+								}))
+								.then(argument("x", IntegerArgumentType.integer(0, 4000))
+										.then(argument("y", IntegerArgumentType.integer(0, 4000)).executes(ctx -> {
+											config.hudX = IntegerArgumentType.getInteger(ctx, "x");
+											config.hudY = IntegerArgumentType.getInteger(ctx, "y");
+											config.save();
+											feedback(ctx, "HUD moved to x=" + config.hudX + " y=" + config.hudY + ".");
+											return 1;
+										}))))
+						.then(literal("sell")
+								.then(literal("cancel").executes(ctx -> {
+									npcSell.cancel();
+									return 1;
+								}))
+								.then(argument("item", StringArgumentType.greedyString()).executes(ctx -> {
+									npcSell.start(StringArgumentType.getString(ctx, "item"));
+									return 1;
+								})))
+						.then(literal("help").executes(StookClient::help));
+	}
+
+	private static int openSettings(CommandContext<FabricClientCommandSource> ctx) {
+		openMenu(ctx.getSource().getClient());
+		feedback(ctx, "Stook menu.");
+		return 1;
+	}
+
+	public static void openMenu(Minecraft client) {
+		client.execute(() -> ClientScreens.set(client, new SettingsScreen(
+				config, tracker, endstone, prices, pestLoadout, pickaxeAbility, updates)));
+	}
+
+	private static int openMoveScreen(CommandContext<FabricClientCommandSource> ctx) {
+		Minecraft client = ctx.getSource().getClient();
+		client.execute(() -> ClientScreens.set(client, new HudMoveScreen(config, tracker, prices)));
+		feedback(ctx, "Drag the HUD, then Esc or Done.");
+		return 1;
+	}
+
+	private static int help(CommandContext<FabricClientCommandSource> ctx) {
+		ctx.getSource().sendFeedback(Component.literal("Stook — /stook (menu) | menu | sell <item> [times] | pest | pestauto | pestalert | orb | pickaxe | endstone | serverpack | update [install] | sell cancel | move [x y|reset] | reset | toggle | hitbox | prices | mode <OFFER|INSTANT>").withStyle(ChatFormatting.GOLD));
+		return 1;
+	}
+
+	public static ModConfig config() {
+		return config;
+	}
+
+	private static void feedback(CommandContext<FabricClientCommandSource> ctx, String message) {
+		ctx.getSource().sendFeedback(Component.literal("[Stook] " + message).withStyle(ChatFormatting.YELLOW));
+	}
+}

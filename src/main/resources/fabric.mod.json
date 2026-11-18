@@ -1,10 +1,10 @@
 {
 	"schemaVersion": 1,
-	"id": "fermento",
+	"id": "stook",
 	"version": "${version}",
 	"name": "Stook",
 	"description": "Garden coins/hour, pests, and Bazaar prices for SkyBlock.",
-	"icon": "assets/fermento/icon.png",
+	"icon": "assets/stook/icon.png",
 	"authors": [
 		"matte"
 	],
@@ -17,14 +17,14 @@
 	"environment": "client",
 	"entrypoints": {
 		"main": [
-			"dev.fermento.FermentoMod"
+			"dev.stook.StookMod"
 		],
 		"client": [
-			"dev.fermento.client.FermentoClient"
+			"dev.stook.client.StookClient"
 		]
 	},
 	"mixins": [
-		"fermento.client.mixins.json"
+		"stook.client.mixins.json"
 	],
 	"depends": {
 		"fabricloader": ">=0.19.1",

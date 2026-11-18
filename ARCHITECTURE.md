@@ -20,14 +20,14 @@ mod farming/
 │   └── schema.sql
 └── src/
     ├── main/
-    │   ├── java/dev/fermento/
-    │   │   └── FermentoMod.java
+    │   ├── java/dev/stook/
+    │   │   └── StookMod.java
     │   └── resources/
     │       ├── fabric.mod.json
-    │       └── assets/fermento/icon.png
+    │       └── assets/stook/icon.png
     └── client/
-        ├── java/dev/fermento/client/
-        │   ├── FermentoClient.java
+        ├── java/dev/stook/client/
+        │   ├── StookClient.java
         │   ├── account/
         │   │   ├── AccountSwitchService.java
         │   │   ├── AccountSwitchScreen.java
@@ -77,13 +77,13 @@ mod farming/
         │   │   ├── ClientMissTime.java
         │   │   └── PolarPresence.java
         │   └── mixin/
-        │       ├── FermentoMixinPlugin.java
+        │       ├── StookMixinPlugin.java
         │       ├── CropHitboxMixin.java
         │       ├── PackRepositoryMixin.java
         │       ├── DownloadedPackSourceMixin.java
         │       └── ClientCommonPacketListenerImplMixin.java
         └── resources/
-            ├── fermento.client.mixins.json
-            └── assets/fermento/lang/
+            ├── stook.client.mixins.json
+            └── assets/stook/lang/
                 └── en_us.json
 ```

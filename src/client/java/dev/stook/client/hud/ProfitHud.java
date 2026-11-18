@@ -1,0 +1,242 @@
+package dev.stook.client.hud;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+
+import dev.stook.client.compat.ClientHudHidden;
+import dev.stook.client.config.ModConfig;
+import dev.stook.client.garden.Crop;
+import dev.stook.client.garden.FarmingTracker;
+import dev.stook.client.garden.SkyblockItems;
+import dev.stook.client.gui.SettingsScreen;
+import dev.stook.client.mining.EndstoneTracker;
+import dev.stook.client.mining.MiningFortune;
+import dev.stook.client.prices.CoflBazaarService;
+import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+
+public final class ProfitHud {
+	private static final int TITLE = 0xFFFFD54A;
+	private static final int LABEL = 0xFFBDBDBD;
+	private static final int VALUE = 0xFFFFF8E1;
+	private static final int GOLD = 0xFFFFC107;
+	private static final int MUTED = 0xFF9E9E9E;
+
+	private static Bounds lastBounds = new Bounds(8, 48, 160, 80);
+
+	private ProfitHud() {
+	}
+
+	public static Bounds lastBounds() {
+		return lastBounds;
+	}
+
+	public static void render(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker, ModConfig config, FarmingTracker tracker, EndstoneTracker endstone, CoflBazaarService prices) {
+		render(graphics, config, tracker, endstone, prices, false);
+	}
+
+	public static void render(GuiGraphicsExtractor graphics, ModConfig config, FarmingTracker tracker, CoflBazaarService prices, boolean force) {
+		render(graphics, config, tracker, null, prices, force);
+	}
+
+	public static void render(GuiGraphicsExtractor graphics, ModConfig config, FarmingTracker tracker, EndstoneTracker endstone, CoflBazaarService prices, boolean force) {
+		Minecraft client = Minecraft.getInstance();
+		boolean endstoneHud = false;
+		if (!force) {
+			if (ClientHudHidden.hidden(client) || SettingsScreen.blockingHud(client)) {
+				return;
+			}
+			if (!config.hudEnabled || client.player == null) {
+				return;
+			}
+			boolean farming = Crop.isFarmingTool(SkyblockItems.skyblockId(client.player.getMainHandItem()));
+			endstoneHud = !farming && endstone != null && endstone.hudVisible(client, config);
+			if (!farming && !endstoneHud) {
+				return;
+			}
+		}
+
+		Font font = client.font;
+		List<String> lines = endstoneHud
+				? buildEndstoneLines(endstone.snapshot(config, prices))
+				: buildLines(tracker.snapshot(config, prices));
+
+		int pad = 4;
+		int lineH = 10;
+		int width = 0;
+		for (String line : lines) {
+			width = Math.max(width, font.width(stripCodes(line)));
+		}
+		int height = lines.size() * lineH + pad * 2;
+		int x = config.hudX;
+		int y = config.hudY;
+
+		lastBounds = new Bounds(x - pad, y - pad, width + pad * 2, height);
+
+		int drawY = y;
+		for (int i = 0; i < lines.size(); i++) {
+			int color = i == 0 ? TITLE : VALUE;
+			if (lines.get(i).startsWith("  ")) {
+				color = LABEL;
+			}
+			if (lines.get(i).contains("coins/h") || lines.get(i).startsWith("Session")) {
+				color = GOLD;
+			}
+			if (lines.get(i).contains("AFK")) {
+				color = MUTED;
+			}
+			graphics.text(font, lines.get(i), x, drawY, color, true);
+			drawY += lineH;
+		}
+	}
+
+	public record Bounds(int x, int y, int width, int height) {
+		public boolean contains(double mouseX, double mouseY) {
+			return mouseX >= x && mouseY >= y && mouseX < x + width && mouseY < y + height;
+		}
+	}
+
+	private static List<String> buildLines(FarmingTracker.Snapshot snap) {
+		List<String> lines = new ArrayList<>();
+		lines.add("Stook");
+
+		if (snap.crop() == null) {
+			lines.add("Hold a crop hoe");
+			return lines;
+		}
+
+		Crop crop = snap.crop();
+		lines.add(crop.displayName + (snap.paused() ? "  (AFK)" : ""));
+
+		if (snap.counter() >= 0) {
+			lines.add("Counter: " + formatCount(snap.counter()));
+		} else {
+			lines.add("Cultivating required");
+		}
+
+		lines.add("Crops/min: " + formatCount(Math.round(snap.adjustedCropsPerMinute())));
+		lines.add("Blocks/s: " + String.format(Locale.US, "%.1f", snap.blocksPerSecond()));
+
+		if (snap.unitPrice() <= 0) {
+			lines.add("NPC price missing");
+		} else {
+			lines.add("Coins/h: " + formatCoins(snap.coinsPerHour()) + "  (NPC)");
+			if (snap.pestKills() > 0 || snap.pestSessionProfit() > 0) {
+				lines.add("Pests: +" + formatCoins(snap.pestCoinsPerHour()) + "/h  ("
+						+ snap.pestKills() + ")");
+			}
+			lines.add("Session: " + formatCoins(snap.sessionProfit())
+					+ "  |  " + formatDuration(snap.activeMs()));
+			if (snap.sessionCoinsPerHour() > 0) {
+				lines.add("Session/h: " + formatCoins(snap.sessionCoinsPerHour()));
+			}
+			lines.add(formatCoins(snap.unitPrice()) + "/crop  NPC");
+		}
+		return lines;
+	}
+
+	private static List<String> buildEndstoneLines(EndstoneTracker.Snapshot snap) {
+		List<String> lines = new ArrayList<>();
+		lines.add("Stook");
+		lines.add("End Stone" + (snap.paused() && snap.activeMs() > 0 ? "  (AFK)" : ""));
+		lines.add("Blocks: " + formatCount(snap.blocks()));
+		lines.add("Blocks/s: " + String.format(Locale.US, "%.1f", snap.blocksPerSecond()));
+
+		MiningFortune.Reading fortune = snap.fortune();
+		if (!fortune.known()) {
+			lines.add("Fortune: tab stats");
+		} else if (fortune.blockKnown() && fortune.block() > 0) {
+			lines.add("Fortune: " + formatCount(fortune.mining()) + "+" + formatCount(fortune.block()));
+		} else {
+			lines.add("Fortune: " + formatCount(fortune.total()));
+		}
+
+		if (snap.unitPrice() <= 0) {
+			lines.add("Price missing");
+			return lines;
+		}
+
+		String priceTag = priceTag(snap);
+		if (snap.coinsPerHour() > 0) {
+			String via = snap.rateSource().isEmpty() ? priceTag : snap.rateSource();
+			if ("loot".equals(via)) {
+				via = "loot " + priceTag;
+			} else if ("fortune".equals(via) || "blocks".equals(via)) {
+				via = "est.";
+			}
+			lines.add("Coins/h: " + formatCoins(snap.coinsPerHour()) + "  (" + via + ")");
+		} else {
+			lines.add("Coins/h: breaking…");
+		}
+		if (snap.miteGel() > 0) {
+			lines.add("Mite gel: " + formatCount(Math.round(snap.miteGel()))
+					+ "  +" + formatCoins(snap.miteGelCoins()));
+		}
+		lines.add("Stones: " + formatCount(Math.round(snap.stones()))
+				+ (snap.fromSacks() ? "" : "  est."));
+		lines.add("Session: " + formatCoins(snap.sessionProfit())
+				+ "  |  " + formatDuration(snap.activeMs()));
+		if (snap.sessionCoinsPerHour() > 0) {
+			lines.add("Session/h: " + formatCoins(snap.sessionCoinsPerHour()));
+		}
+		lines.add(formatCoins(snap.unitPrice()) + "/stone  " + priceTag);
+		return lines;
+	}
+
+	private static String priceTag(EndstoneTracker.Snapshot snap) {
+		if (!snap.bazaar()) {
+			return "NPC";
+		}
+		return snap.sellOffer() ? "BZ offer" : "BZ instant";
+	}
+
+	public static String formatCoins(double value) {
+		if (value >= 1_000_000_000) {
+			return String.format(Locale.US, "%.2fB", value / 1_000_000_000.0);
+		}
+		if (value >= 1_000_000) {
+			return String.format(Locale.US, "%.2fM", value / 1_000_000.0);
+		}
+		if (value >= 10_000) {
+			return String.format(Locale.US, "%.1fk", value / 1_000.0);
+		}
+		if (value >= 1000) {
+			return String.format(Locale.US, "%.0f", value);
+		}
+		if (value >= 10) {
+			return String.format(Locale.US, "%.1f", value);
+		}
+		return String.format(Locale.US, "%.2f", value);
+	}
+
+	public static String formatCount(long value) {
+		if (value >= 1_000_000) {
+			return String.format(Locale.US, "%.2fM", value / 1_000_000.0);
+		}
+		if (value >= 10_000) {
+			return String.format(Locale.US, "%.1fk", value / 1_000.0);
+		}
+		return String.format(Locale.US, "%,d", value);
+	}
+
+	public static String formatDuration(long ms) {
+		long totalSec = Math.max(0, ms / 1000);
+		long h = totalSec / 3600;
+		long m = (totalSec % 3600) / 60;
+		long s = totalSec % 60;
+		if (h > 0) {
+			return String.format(Locale.US, "%dh %02dm", h, m);
+		}
+		if (m > 0) {
+			return String.format(Locale.US, "%dm %02ds", m, s);
+		}
+		return s + "s";
+	}
+
+	private static String stripCodes(String text) {
+		return text;
+	}
+}

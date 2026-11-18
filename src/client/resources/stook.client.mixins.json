@@ -1,0 +1,19 @@
+{
+	"required": true,
+	"minVersion": "0.8",
+	"package": "dev.stook.client.mixin",
+	"compatibilityLevel": "JAVA_25",
+	"plugin": "dev.stook.client.mixin.StookMixinPlugin",
+	"client": [
+		"CropHitboxMixin",
+		"DownloadedPackSourceMixin",
+		"ClientCommonPacketListenerImplMixin",
+		"PackRepositoryMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	},
+	"overwrites": {
+		"requireAnnotations": true
+	}
+}
