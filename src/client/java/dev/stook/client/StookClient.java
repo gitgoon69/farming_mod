@@ -29,7 +29,6 @@ import dev.stook.client.hud.ProfitHud;
 import dev.stook.client.loadout.PestLoadoutService;
 import dev.stook.client.mining.EndstoneTracker;
 import dev.stook.client.mining.PickaxeAbilityService;
-import dev.stook.client.orb.OrbPlacerService;
 import dev.stook.client.prices.CoflBazaarService;
 import dev.stook.client.sell.NpcSellService;
 import dev.stook.client.update.UpdateChecker;
@@ -61,7 +60,6 @@ public class StookClient implements ClientModInitializer {
 	private static NpcSellService npcSell;
 	private static PestLoadoutService pestLoadout;
 	private static PickaxeAbilityService pickaxeAbility;
-	private static OrbPlacerService orbPlacer;
 	private static PestCooldownTracker pestCooldown;
 	private static UpdateChecker updates;
 	private static UsagePingService usagePing;
@@ -77,7 +75,6 @@ public class StookClient implements ClientModInitializer {
 		npcSell = new NpcSellService();
 		pestLoadout = new PestLoadoutService(config);
 		pickaxeAbility = new PickaxeAbilityService(config);
-		orbPlacer = new OrbPlacerService(config);
 		pestCooldown = new PestCooldownTracker();
 		updates = new UpdateChecker();
 		ClientLifecycleEvents.CLIENT_STARTED.register(client -> {
@@ -143,9 +140,7 @@ public class StookClient implements ClientModInitializer {
 				pestLoadout.onPestAlert();
 			}
 			pestLoadout.tick(client);
-			boolean inventoryFree = !pestLoadout.running() && !npcSell.running();
-			orbPlacer.tick(client, inventoryFree);
-			if (inventoryFree && !orbPlacer.busy()) {
+			if (!pestLoadout.running() && !npcSell.running()) {
 				pickaxeAbility.tick(client);
 			}
 			updates.tick(client);
@@ -169,7 +164,6 @@ public class StookClient implements ClientModInitializer {
 				endstone.onActionBar(text);
 			}
 			pickaxeAbility.onChat(text);
-			orbPlacer.onChat(text);
 		});
 
 		ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
@@ -188,7 +182,6 @@ public class StookClient implements ClientModInitializer {
 			VisitorLogbookStats.reset();
 			pestLoadout.resetSession();
 			pickaxeAbility.reset();
-			orbPlacer.reset();
 			pestCooldown.reset();
 			if (npcSell.running()) {
 				npcSell.cancel();
@@ -282,17 +275,6 @@ public class StookClient implements ClientModInitializer {
 							} else {
 								feedback(ctx, "Hypixel server pack: normal priority. Reconnect to put it back on top.");
 							}
-							return 1;
-						}))
-						.then(literal("orb").executes(ctx -> {
-							config.autoOrb = !config.autoOrb;
-							config.save();
-							if (!config.autoOrb) {
-								orbPlacer.reset();
-							}
-							feedback(ctx, config.autoOrb
-									? "Auto orb: ON (slot " + config.orbHotbarSlot + ", 30 blocks, 300s)."
-									: "Auto orb: OFF.");
 							return 1;
 						}))
 						.then(literal("pickaxe").executes(ctx -> {
@@ -389,7 +371,7 @@ public class StookClient implements ClientModInitializer {
 	}
 
 	private static int help(CommandContext<FabricClientCommandSource> ctx) {
-		ctx.getSource().sendFeedback(Component.literal("Stook — /stook (menu) | menu | sell <item> [times] | pest | pestauto | pestalert | orb | pickaxe | endstone | serverpack | update [install] | sell cancel | move [x y|reset] | reset | toggle | hitbox | prices | mode <OFFER|INSTANT>").withStyle(ChatFormatting.GOLD));
+		ctx.getSource().sendFeedback(Component.literal("Stook — /stook (menu) | menu | sell <item> [times] | pest | pestauto | pestalert | pickaxe | endstone | serverpack | update [install] | sell cancel | move [x y|reset] | reset | toggle | hitbox | prices | mode <OFFER|INSTANT>").withStyle(ChatFormatting.GOLD));
 		return 1;
 	}
 

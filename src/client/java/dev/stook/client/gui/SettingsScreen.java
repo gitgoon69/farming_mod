@@ -32,7 +32,6 @@ import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -418,16 +417,6 @@ public final class SettingsScreen extends Screen {
 							}
 							config.save();
 						}));
-				rows.add(toggle("Auto orb", "Right-click the chosen hotbar slot on the ground. Replaces it past 30 blocks or after 300s", Items.ENDER_EYE,
-						() -> config.autoOrb, () -> {
-							config.autoOrb = !config.autoOrb;
-							config.save();
-							ping(config.autoOrb ? "Auto orb on" : "Auto orb off");
-						}));
-				rows.add(stepper("Orb slot", "Hotbar slot that holds the orb (1–9)", Items.CHEST,
-						() -> Integer.toString(config.orbHotbarSlot),
-						() -> stepOrb(-1),
-						() -> stepOrb(1)));
 			}
 			case 4 -> {
 				rows.add(toggle("Server pack last", "Vanilla + your packs override Hypixel", Items.CHEST,
@@ -474,12 +463,6 @@ public final class SettingsScreen extends Screen {
 
 	private void stepAfk(int delta) {
 		config.afkTimeoutSeconds = Mth.clamp(config.afkTimeoutSeconds + delta, 5, 120);
-		config.save();
-	}
-
-	private void stepOrb(int delta) {
-		int max = Inventory.getSelectionSize();
-		config.orbHotbarSlot = Mth.clamp(config.orbHotbarSlot + delta, 1, max);
 		config.save();
 	}
 
@@ -630,7 +613,7 @@ public final class SettingsScreen extends Screen {
 		HUD("HUD", "Coins / hour overlay", Items.GOLDEN_HOE),
 		GARDEN("Farm", "Hitbox and AFK", Items.WHEAT),
 		PEST("Pest", "Loadout and 2m50 alert", Items.FISHING_ROD),
-		MINING("Mine", "End Stone, pickaxe, orb", Items.IRON_PICKAXE),
+		MINING("Mine", "End Stone, pickaxe", Items.IRON_PICKAXE),
 		SYSTEM("Sys", "Pack, updates, account, NPC sell", Items.NETHER_STAR);
 
 		final String label;

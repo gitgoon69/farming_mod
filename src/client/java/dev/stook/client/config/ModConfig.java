@@ -53,10 +53,6 @@ public final class ModConfig {
 	public boolean autoPickaxeAbility = true;
 	/** Coins/hour while mining End Stone (sack loot, else fortune estimate). */
 	public boolean endstoneProfit = true;
-	/** Right-click the hotbar orb onto the ground. Replaces it past 30 blocks or after 300s. */
-	public boolean autoOrb = false;
-	/** Hotbar slot 1-9 that holds the orb. */
-	public int orbHotbarSlot = 9;
 
 	public static ModConfig load() {
 		Path source = Files.exists(PATH) ? PATH : olderConfig();
